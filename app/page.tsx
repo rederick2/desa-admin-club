@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 export default function Home() {
   const router = useRouter()
   const [user, setUser] = useState(null)
+  const [role, setRole] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const supabase = createBrowserClient(
@@ -23,7 +24,26 @@ export default function Home() {
 
       if (session?.user) {
         setUser(session.user)
-        router.push('/dashboard')
+
+        // obtener role
+      const { data: roleData, error: zoneError } = await supabase
+        .from('user_roles')
+        .select('role_id')  
+        .eq('user_id', session.user.id)
+        .single()
+
+      if (!zoneError && roleData) {
+        setRole(roleData)
+      }
+        if (roleData?.role_id === 1) {
+          router.push('/dashboard')
+        } else if (roleData?.role_id === 2) {
+          router.push('/promoter')
+        } else if (roleData?.role_id === 3) {
+          router.push('/home')
+        }
+
+
       } else {
         setLoading(false)
       }

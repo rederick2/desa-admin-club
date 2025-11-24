@@ -20,6 +20,7 @@ export function SidebarNav({ clubId }: SidebarNavProps) {
     { label: 'Eventos', href: `/dashboard/${clubId}/events`, icon: Calendar },
     { label: 'Zonas', href: `/dashboard/${clubId}/zones`, icon: Layers },
     { label: 'Promotores', href: `/dashboard/${clubId}/promoters`, icon: Users },
+    { label: 'Mapa', href: `/dashboard/${clubId}/map-editor`, icon: Layers },
     { label: 'Estadísticas', href: `/dashboard/${clubId}/stats`, icon: BarChart3 },
   ]
 

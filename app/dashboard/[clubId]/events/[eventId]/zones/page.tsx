@@ -40,7 +40,7 @@ interface ClubZoneForDialog {
   nombre: string;
   es_zona_boxes: boolean;
   cantidad_boxes: number | null;
-  orden?: number; 
+  orden?: number;
 }
 
 interface PromoterForDialog {
@@ -78,6 +78,89 @@ export default function EventZonesPage() {
     loadData()
   }, [params.eventId])
 
+  const syncZones = async () => {
+    if (!confirm('¿Estás seguro? Esto copiará las zonas del club a este evento. Si ya existen, se duplicarán.')) return
+
+    setLoading(true)
+    try {
+      // 1. Fetch Club Zones
+      const { data: clubZones, error: zonesError } = await supabase
+        .from('club_zones')
+        .select('*')
+        .eq('club_id', clubId)
+
+      if (zonesError) throw zonesError
+      if (!clubZones || clubZones.length === 0) {
+        alert('No hay zonas en el club para copiar.')
+        return
+      }
+
+      // 2. Create Event Zones
+      console.log('Club Zones to copy:', clubZones)
+      const eventZonesPayload = clubZones.map(z => ({
+        event_id: eventId,
+        club_zone_id: z.id,
+        tipo: z.es_zona_boxes ? 'boxes' : 'general',
+        precio: 0, // Default price
+        capacidad: z.cantidad_boxes || 0 // Default capacity
+      }))
+      console.log('Event Zones Payload:', eventZonesPayload)
+
+      const { data: createdEventZones, error: createZonesError } = await supabase
+        .from('event_zones')
+        .insert(eventZonesPayload)
+        .select()
+
+      if (createZonesError) throw createZonesError
+      if (!createdEventZones) return
+
+      // 3. Fetch Club Boxes
+      const clubZoneIds = clubZones.map(z => z.id)
+      const { data: clubBoxes, error: boxesError } = await supabase
+        .from('club_zone_boxes')
+        .select('*')
+        .in('club_zone_id', clubZoneIds)
+
+      if (boxesError) throw boxesError
+
+      // 4. Create Event Boxes
+      if (clubBoxes && clubBoxes.length > 0) {
+        const boxesPayload: any[] = []
+
+        createdEventZones.forEach((ez: any) => {
+          // Find original club zone boxes
+          const zoneBoxes = clubBoxes.filter(b => b.club_zone_id === ez.club_zone_id)
+
+          zoneBoxes.forEach(b => {
+            boxesPayload.push({
+              event_zone_id: ez.id,
+              numero: b.numero_box,
+              capacidad: 10,
+              estado: 'disponible'
+            })
+          })
+        })
+
+        if (boxesPayload.length > 0) {
+          const { error: createBoxesError } = await supabase
+            .from('boxes')
+            .insert(boxesPayload)
+
+          if (createBoxesError) throw createBoxesError
+        }
+      }
+
+      alert('Zonas sincronizadas correctamente')
+      loadData()
+
+    } catch (error) {
+      console.error('Error syncing zones:', error)
+      alert('Error al sincronizar zonas')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const loadData = async () => {
     try {
       setLoading(true)
@@ -103,16 +186,16 @@ export default function EventZonesPage() {
 
       if (zonesError || clubZonesError) throw zonesError || clubZonesError;
       const sortedClubZones = (clubZonesData ?? []).sort(
-            (a: any, b: any) => (a.orden ?? 0) - (b.orden ?? 0)
-            )
+        (a: any, b: any) => (a.orden ?? 0) - (b.orden ?? 0)
+      )
       const clubZoneOrderMap = new Map(
-            sortedClubZones.map((cz: any, index: number) => [cz.id, index])
-            )
+        sortedClubZones.map((cz: any, index: number) => [cz.id, index])
+      )
       const sortedEventZones = (zonesData ?? []).sort(
         (a: any, b: any) =>
-            (clubZoneOrderMap.get(a.club_zone_id) ?? 0) -
-            (clubZoneOrderMap.get(b.club_zone_id) ?? 0)
-        )
+          (clubZoneOrderMap.get(a.club_zone_id) ?? 0) -
+          (clubZoneOrderMap.get(b.club_zone_id) ?? 0)
+      )
       setZones(sortedEventZones);
       setClubZones(sortedClubZones);
       setPromoters(promotersData || []);
@@ -199,9 +282,15 @@ export default function EventZonesPage() {
             Gestiona las zonas y capacidades para este evento
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          + Agregar zona
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={syncZones} disabled={loading}>
+            <LinkIcon className="w-4 h-4 mr-2" />
+            Sincronizar con Club
+          </Button>
+          <Button onClick={() => setDialogOpen(true)}>
+            + Agregar zona
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4">

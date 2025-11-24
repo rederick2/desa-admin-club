@@ -37,8 +37,24 @@ export default function LoginPage() {
         return
       }
 
-      if (data.session) {
-        router.push('/dashboard')
+      /*if (data.session.user.id) {
+        router.push('/home')
+      }*/
+     // Comprobar el rol del usuario
+      const { data: profile, error: profileError } = await supabase
+        .from('user_roles')
+        .select('role_id')
+        .eq('user_id', data.session.user.id)
+        .single();
+
+      if (profile && profile.role_id === 1) {
+        router.push('/dashboard'); // Redirigir al panel de administrador
+      }else if (profile && profile.role_id === 2) {
+        router.push('/promoter'); // Redirigir al panel de usuario  return;
+      }else if (profile && profile.role_id === 3) {
+        router.push('/home'); // Redirigir al panel de usuario  return;
+      } else if (profileError) {
+        console.error("Error fetching user role:", profileError.message);
       }
     } catch (err) {
       setError('Error al iniciar sesión')

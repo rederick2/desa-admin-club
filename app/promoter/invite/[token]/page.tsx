@@ -113,6 +113,18 @@ export default function PromotorInvitePage(
 
       if (userError) throw userError
 
+      // Create user role
+      const { error: userError2 } = await supabase
+        .from('role_users')
+        .insert([
+          {
+            user_id: authData.user.id,
+            role_id: 2,
+          },
+        ])
+
+      if (userError2) throw userError2
+
       // Link as promoter
       await linkPromoter(authData.user.id)
     } catch (err) {

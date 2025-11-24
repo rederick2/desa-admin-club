@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Eye, Edit, Layers, Users, BarChart3, Plus, Trash2 } from 'lucide-react'
+import { Eye, Edit, Layers, Map, BarChart3, Plus, Trash2 } from 'lucide-react'
 
 interface Event {
   id: string
@@ -158,11 +158,12 @@ export function EventsList({ clubId }: EventsListProps) {
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          router.push(`/dashboard/${clubId}/events/${event.id}/promoters`)
+                          router.push(`/dashboard/${clubId}/events/${event.id}/map`)
                         }
-                        title="Promotores"
+                        title="Mapa en Vivo"
+                        className="text-blue-500 hover:text-blue-600"
                       >
-                        <Users className="w-4 h-4" />
+                        <Map className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"

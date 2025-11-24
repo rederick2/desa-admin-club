@@ -59,11 +59,19 @@ export function EventForm({ clubId, eventId, initialData }: EventFormProps) {
         if (error) throw error
         alert('Evento actualizado')
       } else {
-        const { error } = await supabase
+        const { data: newEvent, error } = await supabase
           .from('events')
           .insert([eventPayload])
+          .select()
+          .single()
 
         if (error) throw error
+
+        // Auto-create zones for new event
+        if (newEvent) {
+          await copyZonesToEvent(newEvent.id)
+        }
+
         alert('Evento creado')
       }
 
@@ -73,6 +81,74 @@ export function EventForm({ clubId, eventId, initialData }: EventFormProps) {
       alert('Error al guardar el evento')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const copyZonesToEvent = async (eventId: string) => {
+    try {
+      // 1. Fetch Club Zones
+      const { data: clubZones, error: zonesError } = await supabase
+        .from('club_zones')
+        .select('*')
+        .eq('club_id', clubId)
+
+      if (zonesError) throw zonesError
+      if (!clubZones || clubZones.length === 0) return
+
+      // 2. Create Event Zones
+      const eventZonesPayload = clubZones.map(z => ({
+        event_id: eventId,
+        club_zone_id: z.id,
+        tipo: z.es_zona_boxes ? 'boxes' : 'general',
+        precio: 0, // Default price
+        capacidad: z.cantidad_boxes || 0 // Default capacity
+      }))
+
+      const { data: createdEventZones, error: createZonesError } = await supabase
+        .from('event_zones')
+        .insert(eventZonesPayload)
+        .select()
+
+      if (createZonesError) throw createZonesError
+      if (!createdEventZones) return
+
+      // 3. Fetch Club Boxes
+      const clubZoneIds = clubZones.map(z => z.id)
+      const { data: clubBoxes, error: boxesError } = await supabase
+        .from('club_zone_boxes')
+        .select('*')
+        .in('club_zone_id', clubZoneIds)
+
+      if (boxesError) throw boxesError
+      if (!clubBoxes || clubBoxes.length === 0) return
+
+      // 4. Create Event Boxes
+      const boxesPayload: any[] = []
+
+      createdEventZones.forEach((ez: any) => {
+        // Find original club zone boxes
+        const zoneBoxes = clubBoxes.filter(b => b.club_zone_id === ez.club_zone_id)
+
+        zoneBoxes.forEach(b => {
+          boxesPayload.push({
+            event_zone_id: ez.id,
+            numero: b.numero_box,
+            estado: 'disponible'
+          })
+        })
+      })
+
+      if (boxesPayload.length > 0) {
+        const { error: createBoxesError } = await supabase
+          .from('boxes')
+          .insert(boxesPayload)
+
+        if (createBoxesError) throw createBoxesError
+      }
+
+    } catch (error) {
+      console.error('Error copying zones:', error)
+      // Don't block the UI, just log it
     }
   }
 
