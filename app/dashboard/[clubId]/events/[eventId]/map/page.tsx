@@ -198,7 +198,10 @@ export default function EventMapPage() {
       `)
       .eq('event_id', eventId)
 
-    const zonesList = (eventZones as EventZone[]) ?? []
+    const zonesList = (eventZones?.map((z: any) => ({
+      ...z,
+      club_zones: Array.isArray(z.club_zones) ? z.club_zones[0] : z.club_zones
+    })) as EventZone[]) ?? []
     setZones(zonesList)
 
     // Boxes
@@ -281,6 +284,27 @@ export default function EventMapPage() {
     return points.join(' ')
   }
 
+  const [scale, setScale] = useState(1)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (wrapperRef.current) {
+        const parentWidth = wrapperRef.current.parentElement?.clientWidth || 800
+        const baseWidth = 800
+        // Calculate scale to fit width, max 1 (don't scale up)
+        const newScale = Math.min((parentWidth - 32) / baseWidth, 1) // -32 for padding
+        setScale(Math.max(newScale, 0.1)) // Min scale to avoid 0
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    // Call after a small delay to ensure parent is rendered
+    setTimeout(handleResize, 100)
+
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   if (loading) {
     return (
       <div className="p-6">
@@ -291,154 +315,165 @@ export default function EventMapPage() {
     )
   }
 
-  const containerWidth = containerRef.current?.clientWidth ?? 800
-  const containerHeight = containerRef.current?.clientHeight ?? 1000
-
   return (
-    <div className="p-6 space-y-4 bg-background min-h-screen">
-      <div className="flex items-center gap-2">
-        <h1 className="text-2xl font-bold">
-          Mapa en Vivo: {eventName || 'Evento'}
-        </h1>
-        {clubName && (
-          <span className="text-sm text-muted-foreground">
-            ({clubName})
+    <div className="p-4 md:p-6 space-y-4 bg-background min-h-screen flex flex-col">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold">
+            Mapa en Vivo: {eventName || 'Evento'}
+          </h1>
+          {clubName && (
+            <p className="text-sm text-muted-foreground">
+              ({clubName})
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-100 text-green-800' :
+            realtimeStatus === 'CONNECTING' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+            <span className={`w-2 h-2 rounded-full ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-600 animate-pulse' : 'bg-current'}`} />
+            {realtimeStatus === 'SUBSCRIBED' ? 'En vivo' : realtimeStatus}
           </span>
-        )}
-        <span className={`ml-auto text-xs px-2 py-1 rounded-full flex items-center gap-1 ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-100 text-green-800' :
-          realtimeStatus === 'CONNECTING' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
-          }`}>
-          <span className={`w-2 h-2 rounded-full ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-600 animate-pulse' : 'bg-current'}`} />
-          {realtimeStatus === 'SUBSCRIBED' ? 'En vivo' : realtimeStatus}
-        </span>
-        <button
-          onClick={testConnection}
-          className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200"
-        >
-          Probar Conexión
-        </button>
+          <button
+            onClick={testConnection}
+            className="flex-1 md:flex-none text-xs bg-blue-100 text-blue-800 px-3 py-1.5 rounded hover:bg-blue-200 text-center"
+          >
+            Probar Conexión
+          </button>
+        </div>
       </div>
 
       {/* CANVAS */}
-      <div className="flex-1 bg-zinc-900 p-8 overflow-auto flex items-center justify-center rounded-lg">
+      <div className="flex-1 bg-zinc-900 p-4 rounded-lg flex flex-col items-center">
         <div
-          ref={containerRef}
-          className="relative w-[800px] h-[1000px] bg-zinc-950 shadow-2xl rounded-lg overflow-hidden border border-zinc-800"
+          ref={wrapperRef}
+          className="w-full flex justify-center"
+          style={{ height: 1000 * scale }}
         >
-          {bgUrl ? (
-            <img
-              src={bgUrl}
-              alt="Mapa del club"
-              className="w-full h-full object-cover pointer-events-none select-none opacity-60"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-zinc-700">
-              <span className="text-sm">Sin imagen de fondo</span>
-            </div>
-          )}
+          <div
+            ref={containerRef}
+            className="relative w-[800px] h-[1000px] bg-zinc-950 shadow-2xl rounded-lg overflow-hidden border border-zinc-800 origin-top"
+            style={{
+              transform: `scale(${scale})`,
+            }}
+          >
+            {bgUrl ? (
+              <img
+                src={bgUrl}
+                alt="Mapa del club"
+                className="w-full h-full object-cover pointer-events-none select-none opacity-60"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-zinc-700">
+                <span className="text-sm">Sin imagen de fondo</span>
+              </div>
+            )}
 
-          {zones.map(zone => {
-            const cz = zone.club_zones
-            if (!cz) return null
+            {zones.map(zone => {
+              const cz = zone.club_zones
+              if (!cz) return null
 
-            const xPx = ((cz.pos_x ?? 0) / 100) * 800
-            const yPx = ((cz.pos_y ?? 0) / 100) * 1000
-            const widthPx = ((cz.width_pct ?? 20) / 100) * 800
-            const heightPx = ((cz.height_pct ?? 15) / 100) * 1000
+              const xPx = ((cz.pos_x ?? 0) / 100) * 800
+              const yPx = ((cz.pos_y ?? 0) / 100) * 1000
+              const widthPx = ((cz.width_pct ?? 20) / 100) * 800
+              const heightPx = ((cz.height_pct ?? 15) / 100) * 1000
 
-            const zoneBoxes = boxes
-              .filter(b => b.event_zone_id === zone.id)
-              .sort((a, b) => a.numero - b.numero)
+              const zoneBoxes = boxes
+                .filter(b => b.event_zone_id === zone.id)
+                .sort((a, b) => a.numero - b.numero)
 
-            const soldCount = ticketCounts[zone.id] || 0
-            const capacity = zone.capacidad || 0
-            const percentage = capacity > 0 ? Math.round((soldCount / capacity) * 100) : 0
-            const isFull = capacity > 0 && soldCount >= capacity
+              const soldCount = ticketCounts[zone.id] || 0
+              const capacity = zone.capacidad || 0
+              const percentage = capacity > 0 ? Math.round((soldCount / capacity) * 100) : 0
+              const isFull = capacity > 0 && soldCount >= capacity
 
-            return (
-              <div
-                key={zone.id}
-                className="absolute"
-                style={{
-                  left: xPx,
-                  top: yPx,
-                  width: widthPx,
-                  height: heightPx,
-                }}
-              >
-                {/* Zone Label - Outside */}
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap z-20 pointer-events-none">
-                  <span className={`px-2 py-1 rounded text-xs font-bold shadow-sm backdrop-blur-sm select-none border ${isFull ? 'bg-red-900/80 text-red-100 border-red-500' : 'bg-black/80 text-white border-white/20'}`}>
-                    {cz.nombre} {isFull && '(AGOTADO)'}
-                  </span>
-                </div>
+              return (
+                <div
+                  key={zone.id}
+                  className="absolute"
+                  style={{
+                    left: xPx,
+                    top: yPx,
+                    width: widthPx,
+                    height: heightPx,
+                  }}
+                >
+                  {/* Zone Label - Outside */}
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap z-20 pointer-events-none">
+                    <span className={`px-2 py-1 rounded text-xs font-bold shadow-sm backdrop-blur-sm select-none border ${isFull ? 'bg-red-900/80 text-red-100 border-red-500' : 'bg-black/80 text-white border-white/20'}`}>
+                      {cz.nombre} {isFull && '(AGOTADO)'}
+                    </span>
+                  </div>
 
-                {/* Shape Visual */}
-                <div className="w-full h-full relative">
-                  {cz.tipo_forma === 'poly' ? (
-                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
-                      <polygon
-                        points={getPolygonPointsString(cz)}
-                        fill={isFull ? "rgba(239, 68, 68, 0.3)" : "rgba(37, 99, 235, 0.2)"}
-                        stroke={isFull ? "#ef4444" : "white"}
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    </svg>
-                  ) : (
-                    <div
-                      className={`absolute inset-0 border-2 transition-colors ${cz.tipo_forma === 'circle' ? 'rounded-full' : 'rounded-lg'} ${isFull ? 'border-red-500 bg-red-500/20' : 'border-white bg-blue-600/20'}`}
-                    />
-                  )}
-
-                  {/* Content Overlay */}
-                  <div className="absolute inset-0">
-                    {cz.es_zona_boxes ? (
-                      <div className="relative w-full h-full">
-                        {zoneBoxes.map(box => {
-                          const isOcupado = box.estado?.toLowerCase() === 'ocupado'
-                          const boxX = box.pos_x ?? 0
-                          const boxY = box.pos_y ?? 0
-
-                          return (
-                            <div
-                              key={box.id}
-                              className={`absolute w-7 h-7 rounded-full ${isOcupado ? 'bg-red-500' : 'bg-blue-600'} text-white text-[10px] flex items-center justify-center shadow-md transition-colors duration-300`}
-                              style={{
-                                left: boxX,
-                                top: boxY,
-                                width: 28,
-                                height: 28
-                              }}
-                              title={`Box ${box.numero}: ${isOcupado ? 'Ocupado' : 'Disponible'}`}
-                            >
-                              {box.numero}
-                            </div>
-                          )
-                        })}
-                      </div>
+                  {/* Shape Visual */}
+                  <div className="w-full h-full relative">
+                    {cz.tipo_forma === 'poly' ? (
+                      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
+                        <polygon
+                          points={getPolygonPointsString(cz)}
+                          fill={isFull ? "rgba(239, 68, 68, 0.3)" : "rgba(37, 99, 235, 0.2)"}
+                          stroke={isFull ? "#ef4444" : "white"}
+                          strokeWidth="2"
+                          strokeLinejoin="round"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      </svg>
                     ) : (
-                      <div className="flex flex-col items-center justify-center w-full h-full">
-                        <div className="flex flex-col items-center justify-center bg-black/40 rounded p-1 backdrop-blur-[1px]">
-                          <span className="text-white text-xs font-bold">{soldCount}/{capacity}</span>
-                          <div className="w-12 h-1 bg-white/30 rounded-full mt-1 overflow-hidden">
-                            <div
-                              className={`h-full ${isFull ? 'bg-red-500' : 'bg-blue-400'}`}
-                              style={{ width: `${Math.min(percentage, 100)}%` }}
-                            />
+                      <div
+                        className={`absolute inset-0 border-2 transition-colors ${cz.tipo_forma === 'circle' ? 'rounded-full' : 'rounded-lg'} ${isFull ? 'border-red-500 bg-red-500/20' : 'border-white bg-blue-600/20'}`}
+                      />
+                    )}
+
+                    {/* Content Overlay */}
+                    <div className="absolute inset-0">
+                      {cz.es_zona_boxes ? (
+                        <div className="relative w-full h-full">
+                          {zoneBoxes.map(box => {
+                            const isOcupado = box.estado?.toLowerCase() === 'ocupado'
+                            const boxX = box.pos_x ?? 0
+                            const boxY = box.pos_y ?? 0
+
+                            return (
+                              <div
+                                key={box.id}
+                                className={`absolute w-7 h-7 rounded-full ${isOcupado ? 'bg-red-500' : 'bg-blue-600'} text-white text-[10px] flex items-center justify-center shadow-md transition-colors duration-300`}
+                                style={{
+                                  left: boxX,
+                                  top: boxY,
+                                  width: 28,
+                                  height: 28
+                                }}
+                                title={`Box ${box.numero}: ${isOcupado ? 'Ocupado' : 'Disponible'}`}
+                              >
+                                {box.numero}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center w-full h-full">
+                          <div className="flex flex-col items-center justify-center bg-black/40 rounded p-1 backdrop-blur-[1px]">
+                            <span className="text-white text-xs font-bold">{soldCount}/{capacity}</span>
+                            <div className="w-12 h-1 bg-white/30 rounded-full mt-1 overflow-hidden">
+                              <div
+                                className={`h-full ${isFull ? 'bg-red-500' : 'bg-blue-400'}`}
+                                style={{ width: `${Math.min(percentage, 100)}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       </div>
-    </div >
+    </div>
   )
 }

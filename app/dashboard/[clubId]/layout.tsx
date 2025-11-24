@@ -1,5 +1,6 @@
-import { SidebarNav } from '@/components/sidebar-nav'
+import { AppSidebar } from '@/components/app-sidebar'
 import { ClubAppBar } from '@/components/club-app-bar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import type { ReactNode } from 'react'
 
 type LayoutProps = {
@@ -13,11 +14,14 @@ export default async function ClubDashboardLayout({
 }: LayoutProps) {
   const { clubId } = await params
   return (
-    <div className="md:pl-64">
-      <ClubAppBar clubId={clubId} />
-      <SidebarNav clubId={clubId} />
-      {/* El padding-left (md:pl-64) en el div principal compensa el ancho del sidebar en desktop */}
-      {children}
-    </div>
+    <SidebarProvider>
+      <AppSidebar clubId={clubId} />
+      <SidebarInset>
+        <ClubAppBar clubId={clubId} />
+        <div className="flex-1 p-4 md:p-6">
+          {children}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

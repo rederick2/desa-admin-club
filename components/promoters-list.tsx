@@ -11,6 +11,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Eye, Edit, Trash2, Plus, ToggleLeft as Toggle2 } from 'lucide-react'
 import { PromoterDialog } from './promoter-dialog'
@@ -69,7 +77,13 @@ export function PromotersList({ clubId }: PromotersListProps) {
         .order('codigo', { ascending: true })
 
       if (error) throw error
-      setPromoters(data || [])
+
+      const formattedData = (data || []).map((p: any) => ({
+        ...p,
+        users: Array.isArray(p.users) ? p.users[0] : p.users
+      }))
+
+      setPromoters(formattedData as Promoter[])
     } catch (error) {
       console.error('Error loading promoters:', error)
     } finally {
@@ -126,14 +140,14 @@ export function PromotersList({ clubId }: PromotersListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-2xl font-bold text-foreground">Promotores</h2>
         <Button
           onClick={() => {
             setSelectedPromoter(null)
             setShowDialog(true)
           }}
-          className="gap-2"
+          className="gap-2 w-full md:w-auto"
         >
           <Plus className="w-4 h-4" />
           Agregar promotor
@@ -153,71 +167,138 @@ export function PromotersList({ clubId }: PromotersListProps) {
           </Button>
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Comisión</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {promoters.map((promoter) => (
-                <TableRow key={promoter.id}>
-                  <TableCell className="font-medium">
+        <>
+          {/* Mobile View - Cards */}
+          <div className="grid gap-4 md:hidden">
+            {promoters.map((promoter) => (
+              <Card key={promoter.id}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-base font-medium">
                     {promoter.users?.nombre || '-'}
-                  </TableCell>
-                  <TableCell>{promoter.codigo}</TableCell>
-                  <TableCell>{promoter.users?.email || '-'}</TableCell>
-                  <TableCell>{promoter.users?.telefono || '-'}</TableCell>
-                  <TableCell>{promoter.porcentaje_comision}%</TableCell>
-                  <TableCell>{getStatusBadge(promoter.activo)}</TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedPromoter(promoter)
-                          setShowDialog(true)
-                        }}
-                        title="Ver/Editar"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleStatus(promoter)}
-                        title={
-                          promoter.activo
-                            ? 'Desactivar'
-                            : 'Activar'
-                        }
-                      >
-                        <Toggle2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(promoter.id)}
-                        title="Eliminar"
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                  </CardTitle>
+                  {getStatusBadge(promoter.activo)}
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Código:</span>
+                      <span className="font-mono">{promoter.codigo}</span>
                     </div>
-                  </TableCell>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Email:</span>
+                      <span>{promoter.users?.email || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Teléfono:</span>
+                      <span>{promoter.users?.telefono || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Comisión:</span>
+                      <span>{promoter.porcentaje_comision}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedPromoter(promoter)
+                      setShowDialog(true)
+                    }}
+                    className="flex-1"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Ver
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleToggleStatus(promoter)}
+                    className="flex-1"
+                  >
+                    <Toggle2 className="w-4 h-4 mr-2" />
+                    {promoter.activo ? 'Desactivar' : 'Activar'}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => handleDelete(promoter.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop View - Table */}
+          <div className="hidden md:block border border-border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Teléfono</TableHead>
+                  <TableHead>Comisión</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {promoters.map((promoter) => (
+                  <TableRow key={promoter.id}>
+                    <TableCell className="font-medium">
+                      {promoter.users?.nombre || '-'}
+                    </TableCell>
+                    <TableCell>{promoter.codigo}</TableCell>
+                    <TableCell>{promoter.users?.email || '-'}</TableCell>
+                    <TableCell>{promoter.users?.telefono || '-'}</TableCell>
+                    <TableCell>{promoter.porcentaje_comision}%</TableCell>
+                    <TableCell>{getStatusBadge(promoter.activo)}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedPromoter(promoter)
+                            setShowDialog(true)
+                          }}
+                          title="Ver/Editar"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleStatus(promoter)}
+                          title={
+                            promoter.activo
+                              ? 'Desactivar'
+                              : 'Activar'
+                          }
+                        >
+                          <Toggle2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(promoter.id)}
+                          title="Eliminar"
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       <PromoterDialog
