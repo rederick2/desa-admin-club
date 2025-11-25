@@ -119,7 +119,99 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Pastel gradient background for auth pages */
+.auth-gradient {
+  background: linear-gradient(135deg,
+      #E8D5F2 0%,
+      /* Soft lavender */
+      #F5E6F0 25%,
+      /* Light pink */
+      #E8F5E9 50%,
+      /* Soft mint */
+      #E3F2FD 75%,
+      /* Light blue */
+      #F3E5F5 100%
+      /* Pale purple */
+    ) !important;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Force light text colors on auth pages */
+.auth-gradient * {
+  color-scheme: light;
+}
+
+/* Auth input with icon styles */
+.auth-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.auth-input-field {
+  padding-left: 40px !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px);
+}
+
+.auth-input-field:focus {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Black rounded button for auth */
+.auth-button-primary {
+  background: #000 !important;
+  color: #fff !important;
+  border-radius: 25px !important;
+  padding: 12px 24px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+}
+
+.auth-button-primary:hover {
+  background: #333 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Auth card styling */
+.auth-card {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Force dark text on auth pages for readability */
+.auth-card h1,
+.auth-card p,
+.auth-card label,
+.auth-card a {
+  color: #1a1a1a !important;
+}
+
+.auth-card .text-muted-foreground {
+  color: #666 !important;
+}
+
+.auth-card .text-primary {
+  color: #000 !important;
 }

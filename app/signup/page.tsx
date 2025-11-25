@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
+import { Mail, Lock, User, Phone } from 'lucide-react'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -85,115 +86,189 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div
+      className="flex items-center justify-center px-4"
+      style={{
+        background: 'linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 50%, #4a2c6d 100%)',
+        minHeight: '100vh'
+      }}
+    >
       <div className="w-full max-w-md">
-        <Card className="p-8 border border-border">
+        <Card
+          className="p-8"
+          style={{
+            background: 'rgba(20, 10, 40, 0.6)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          }}
+        >
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-3xl font-bold mb-2" style={{ color: '#ffffff' }}>
               Crear Cuenta
             </h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm" style={{ color: '#b8b8b8' }}>
               Regístrate para gestionar tus eventos y entradas
             </p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-destructive text-sm">{error}</p>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+              <p className="text-sm" style={{ color: '#f87171' }}>{error}</p>
             </div>
           )}
 
           {success && (
-            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <p className="text-green-600 dark:text-green-400 text-sm">{success}</p>
+            <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+              <p className="text-sm" style={{ color: '#4ade80' }}>{success}</p>
             </div>
           )}
 
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Nombre completo
               </label>
-              <Input
-                type="text"
-                placeholder="Juan Pérez"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                disabled={loading}
-                required
-              />
+              <div className="auth-input-wrapper">
+                <User className="auth-input-icon" size={18} style={{ color: '#888' }} />
+                <Input
+                  type="text"
+                  placeholder="Juan Pérez"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  disabled={loading}
+                  required
+                  style={{
+                    paddingLeft: '40px',
+                    background: 'rgba(30, 20, 50, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Email
               </label>
-              <Input
-                type="email"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-              />
+              <div className="auth-input-wrapper">
+                <Mail className="auth-input-icon" size={18} style={{ color: '#888' }} />
+                <Input
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  required
+                  style={{
+                    paddingLeft: '40px',
+                    background: 'rgba(30, 20, 50, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Teléfono
               </label>
-              <Input
-                type="tel"
-                placeholder="+34 600 000 000"
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                disabled={loading}
-              />
+              <div className="auth-input-wrapper">
+                <Phone className="auth-input-icon" size={18} style={{ color: '#888' }} />
+                <Input
+                  type="tel"
+                  placeholder="+34 600 000 000"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  disabled={loading}
+                  style={{
+                    paddingLeft: '40px',
+                    background: 'rgba(30, 20, 50, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Contraseña
               </label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                required
-              />
+              <div className="auth-input-wrapper">
+                <Lock className="auth-input-icon" size={18} style={{ color: '#888' }} />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  required
+                  style={{
+                    paddingLeft: '40px',
+                    background: 'rgba(30, 20, 50, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Confirmar contraseña
               </label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={loading}
-                required
-              />
+              <div className="auth-input-wrapper">
+                <Lock className="auth-input-icon" size={18} style={{ color: '#888' }} />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={loading}
+                  required
+                  style={{
+                    paddingLeft: '40px',
+                    background: 'rgba(30, 20, 50, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
             </div>
 
             <Button
               type="submit"
               disabled={loading}
               className="w-full"
+              style={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)',
+                color: '#ffffff',
+                borderRadius: '25px',
+                padding: '12px 24px',
+                fontWeight: '500',
+                border: 'none',
+                marginTop: '1.5rem'
+              }}
             >
               {loading ? 'Creando cuenta...' : 'Crear cuenta'}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm" style={{ color: '#b8b8b8' }}>
               ¿Ya tienes cuenta?{' '}
               <Link
                 href="/login"
-                className="text-primary hover:underline font-medium"
+                className="hover:underline font-medium"
+                style={{ color: '#a78bfa' }}
               >
                 Inicia sesión
               </Link>
