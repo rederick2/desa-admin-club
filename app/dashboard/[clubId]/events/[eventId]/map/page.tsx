@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { RealtimeChannel } from '@supabase/supabase-js'
+import { ZoomIn, ZoomOut, Maximize, Move } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface Point {
   x: number
@@ -61,6 +63,12 @@ export default function EventMapPage() {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
 
+  // Zoom & Pan State
+  const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (!clubId || !eventId) return
     void loadData()
@@ -77,30 +85,22 @@ export default function EventMapPage() {
       .on(
         'postgres_changes',
         {
-          event: '*', // Escuchar TODO (INSERT, UPDATE, DELETE) para depurar
+          event: '*',
           schema: 'public',
           table: 'boxes',
           filter: `event_zone_id=in.(${zones.map(z => z.id).join(',')})`
         },
         (payload) => {
-          console.log('ANY Box change received:', payload)
           if (payload.eventType === 'UPDATE') {
             const updatedBox = payload.new as Box
             setBoxes(prev => prev.map(b =>
               b.id === updatedBox.id
-                ? { ...b, ...updatedBox, pos_x: b.pos_x, pos_y: b.pos_y } // Preserve position
+                ? { ...b, ...updatedBox, pos_x: b.pos_x, pos_y: b.pos_y }
                 : b
             ))
           }
         }
       )
-      .on('system', { event: '*' }, (payload) => {
-        console.log('System event:', payload)
-      })
-      .on('broadcast', { event: 'test' }, (payload) => {
-        console.log('BROADCAST RECEIVED:', payload)
-        alert('Conexión Realtime OK: Mensaje de prueba recibido')
-      })
       .on(
         'postgres_changes',
         {
@@ -110,7 +110,6 @@ export default function EventMapPage() {
           filter: `event_zone_id=in.(${zones.map(z => z.id).join(',')})`
         },
         (payload) => {
-          console.log('Ticket insert received:', payload)
           const newTicket = payload.new as any
           if (newTicket.event_zone_id) {
             setTicketCounts(prev => ({
@@ -121,32 +120,27 @@ export default function EventMapPage() {
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status)
         setRealtimeStatus(status)
       })
 
     channelRef.current = channel
 
     return () => {
-      console.log('Cleaning up subscription')
       supabase.removeChannel(channel)
       channelRef.current = null
     }
   }, [zones, eventId, supabase])
 
   const testConnection = async () => {
-    console.log('Testing connection...')
     if (!channelRef.current) {
       alert('Error: No hay canal activo')
       return
     }
-
     const status = await channelRef.current.send({
       type: 'broadcast',
       event: 'test',
       payload: { message: 'Test connection' },
     })
-    console.log('Send status:', status)
     if (status !== 'ok') {
       alert(`Error al enviar mensaje: ${status}`)
     }
@@ -223,13 +217,10 @@ export default function EventMapPage() {
       const boxesData = boxesResult.data as Box[] ?? []
       const clubBoxesData = clubBoxesResult.data as any[] ?? []
 
-      // Merge position data into boxes
       const boxesWithPos = boxesData.map(box => {
-        // Find the event zone for this box
         const zone = zonesList.find(z => z.id === box.event_zone_id)
         if (!zone || !zone.club_zones) return box
 
-        // Find the corresponding club box
         const clubBox = clubBoxesData.find(cb =>
           cb.club_zone_id === zone.club_zones?.id &&
           cb.numero_box === box.numero
@@ -244,7 +235,6 @@ export default function EventMapPage() {
 
       setBoxes(boxesWithPos)
 
-      // Tickets
       const { data: ticketsData } = await supabase
         .from('tickets')
         .select('event_zone_id, event_zones!inner(event_id)')
@@ -267,12 +257,10 @@ export default function EventMapPage() {
     setLoading(false)
   }
 
-  // Helper for Polygon Points String
   const getPolygonPointsString = (zone: ClubZone) => {
     if (zone.puntos && zone.puntos.length > 0) {
       return zone.puntos.map(p => `${p.x},${p.y}`).join(' ')
     }
-    // Fallback
     const sides = zone.lados || 4
     const points = []
     for (let i = 0; i < sides; i++) {
@@ -284,87 +272,153 @@ export default function EventMapPage() {
     return points.join(' ')
   }
 
-  const [scale, setScale] = useState(1)
-  const wrapperRef = useRef<HTMLDivElement>(null)
+  // Zoom & Pan Handlers
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault()
+      const scaleAmount = -e.deltaY * 0.001
+      const newScale = Math.min(Math.max(0.1, transform.k + scaleAmount), 5)
+      setTransform(prev => ({ ...prev, k: newScale }))
+    }
+  }
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true)
+    setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y })
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return
+    e.preventDefault()
+    setTransform(prev => ({
+      ...prev,
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    }))
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const zoomIn = () => setTransform(prev => ({ ...prev, k: Math.min(prev.k * 1.2, 5) }))
+  const zoomOut = () => setTransform(prev => ({ ...prev, k: Math.max(prev.k / 1.2, 0.1) }))
+
+  const resetTransform = () => {
+    if (wrapperRef.current) {
+      const parentWidth = wrapperRef.current.clientWidth
+      const parentHeight = wrapperRef.current.clientHeight
+      const baseWidth = 800
+      const baseHeight = 1000
+
+      const scaleX = parentWidth / baseWidth
+      const scaleY = parentHeight / baseHeight
+      const scale = Math.min(scaleX, scaleY, 1) * 0.9 // 90% fit
+
+      const x = (parentWidth - baseWidth * scale) / 2
+      const y = (parentHeight - baseHeight * scale) / 2
+
+      setTransform({ x, y, k: scale })
+    } else {
+      setTransform({ x: 0, y: 0, k: 1 })
+    }
+  }
 
   useEffect(() => {
-    const handleResize = () => {
-      if (wrapperRef.current) {
-        const parentWidth = wrapperRef.current.parentElement?.clientWidth || 800
-        const baseWidth = 800
-        // Calculate scale to fit width, max 1 (don't scale up)
-        const newScale = Math.min((parentWidth - 32) / baseWidth, 1) // -32 for padding
-        setScale(Math.max(newScale, 0.1)) // Min scale to avoid 0
-      }
+    // Initial fit
+    const timer = setTimeout(resetTransform, 100)
+    window.addEventListener('resize', resetTransform)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', resetTransform)
     }
-
-    window.addEventListener('resize', handleResize)
-    // Call after a small delay to ensure parent is rendered
-    setTimeout(handleResize, 100)
-
-    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   if (loading) {
     return (
-      <div className="p-6">
-        <p className="text-sm text-muted-foreground">
-          Cargando mapa en vivo...
-        </p>
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950 text-white">
+        <p className="text-lg animate-pulse">Cargando mapa en vivo...</p>
       </div>
     )
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4 bg-background min-h-screen flex flex-col">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold">
-            Mapa en Vivo: {eventName || 'Evento'}
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-zinc-950 overflow-hidden">
+      {/* Header Toolbar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-zinc-900 border-b border-zinc-800 z-10 shadow-md">
+        <div className="flex items-center gap-3">
+          <h1 className="text-lg font-bold text-white">
+            {eventName} <span className="text-zinc-400 font-normal text-sm">({clubName})</span>
           </h1>
-          {clubName && (
-            <p className="text-sm text-muted-foreground">
-              ({clubName})
-            </p>
-          )}
+          <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500/20 text-green-400' :
+            realtimeStatus === 'CONNECTING' ? 'bg-yellow-500/20 text-yellow-400' :
+              'bg-red-500/20 text-red-400'
+            }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500 animate-pulse' : 'bg-current'}`} />
+            {realtimeStatus === 'SUBSCRIBED' ? 'EN VIVO' : realtimeStatus}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <span className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-100 text-green-800' :
-            realtimeStatus === 'CONNECTING' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-red-100 text-red-800'
-            }`}>
-            <span className={`w-2 h-2 rounded-full ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-600 animate-pulse' : 'bg-current'}`} />
-            {realtimeStatus === 'SUBSCRIBED' ? 'En vivo' : realtimeStatus}
-          </span>
-          <button
+        {/*<div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={testConnection}
-            className="flex-1 md:flex-none text-xs bg-blue-100 text-blue-800 px-3 py-1.5 rounded hover:bg-blue-200 text-center"
+            className="h-8 text-xs border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
           >
             Probar Conexión
-          </button>
-        </div>
+          </Button>
+        </div>*/}
       </div>
 
-      {/* CANVAS */}
-      <div className="flex-1 bg-zinc-900 p-4 rounded-lg flex flex-col items-center">
+      {/* Map Canvas Area */}
+      <div className="relative flex-1 overflow-hidden bg-zinc-950">
+        {/* Floating Controls */}
+        <div className="absolute top-4 right-4 flex flex-col gap-2 z-20 bg-zinc-900/90 backdrop-blur p-2 rounded-lg border border-zinc-800 shadow-xl">
+          <Button variant="ghost" size="icon" onClick={zoomIn} className="h-8 w-8 text-zinc-300 hover:text-white hover:bg-zinc-800" title="Acercar">
+            <ZoomIn size={18} />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={zoomOut} className="h-8 w-8 text-zinc-300 hover:text-white hover:bg-zinc-800" title="Alejar">
+            <ZoomOut size={18} />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={resetTransform} className="h-8 w-8 text-zinc-300 hover:text-white hover:bg-zinc-800" title="Restablecer vista">
+            <Maximize size={18} />
+          </Button>
+        </div>
+
+        <div className="absolute bottom-4 left-4 z-20 bg-zinc-900/80 backdrop-blur px-3 py-1.5 rounded-md border border-zinc-800 text-xs text-zinc-400 pointer-events-none">
+          <div className="flex items-center gap-2">
+            <Move size={12} />
+            <span>Arrastra para mover • Rueda para zoom</span>
+          </div>
+        </div>
+
+        {/* Draggable Area */}
         <div
           ref={wrapperRef}
-          className="w-full flex justify-center"
-          style={{ height: 1000 * scale }}
+          className={`w-full h-full cursor-${isDragging ? 'grabbing' : 'grab'} touch-none`}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
         >
           <div
             ref={containerRef}
-            className="relative w-[800px] h-[1000px] bg-zinc-950 shadow-2xl rounded-lg overflow-hidden border border-zinc-800 origin-top"
+            className="absolute origin-top-left shadow-2xl rounded-sm overflow-hidden bg-zinc-900"
             style={{
-              transform: `scale(${scale})`,
+              width: 800,
+              height: 1000,
+              transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.k})`,
+              transition: isDragging ? 'none' : 'transform 0.1s ease-out'
             }}
           >
             {bgUrl ? (
               <img
                 src={bgUrl}
                 alt="Mapa del club"
-                className="w-full h-full object-cover pointer-events-none select-none opacity-60"
+                className="w-full h-full object-cover pointer-events-none select-none opacity-50"
+                draggable={false}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-zinc-700">
@@ -401,29 +455,28 @@ export default function EventMapPage() {
                     height: heightPx,
                   }}
                 >
-                  {/* Zone Label - Outside */}
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap z-20 pointer-events-none">
-                    <span className={`px-2 py-1 rounded text-xs font-bold shadow-sm backdrop-blur-sm select-none border ${isFull ? 'bg-red-900/80 text-red-100 border-red-500' : 'bg-black/80 text-white border-white/20'}`}>
-                      {cz.nombre} {isFull && '(AGOTADO)'}
+                  {/* Zone Label */}
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap z-10 pointer-events-none">
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm backdrop-blur-sm select-none border ${isFull ? 'bg-red-900/80 text-red-100 border-red-500' : 'bg-black/60 text-white border-white/10'}`}>
+                      {cz.nombre}
                     </span>
                   </div>
 
                   {/* Shape Visual */}
-                  <div className="w-full h-full relative">
+                  <div className="w-full h-full relative group">
                     {cz.tipo_forma === 'poly' ? (
                       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
                         <polygon
                           points={getPolygonPointsString(cz)}
-                          fill={isFull ? "rgba(239, 68, 68, 0.3)" : "rgba(37, 99, 235, 0.2)"}
-                          stroke={isFull ? "#ef4444" : "white"}
-                          strokeWidth="2"
-                          strokeLinejoin="round"
+                          fill={isFull ? "rgba(239, 68, 68, 0.2)" : "rgba(37, 99, 235, 0.1)"}
+                          stroke={isFull ? "#ef4444" : "rgba(255,255,255,0.3)"}
+                          strokeWidth="1"
                           vectorEffect="non-scaling-stroke"
                         />
                       </svg>
                     ) : (
                       <div
-                        className={`absolute inset-0 border-2 transition-colors ${cz.tipo_forma === 'circle' ? 'rounded-full' : 'rounded-lg'} ${isFull ? 'border-red-500 bg-red-500/20' : 'border-white bg-blue-600/20'}`}
+                        className={`absolute inset-0 border transition-colors ${cz.tipo_forma === 'circle' ? 'rounded-full' : 'rounded-sm'} ${isFull ? 'border-red-500 bg-red-500/10' : 'border-white/30 bg-blue-500/10'}`}
                       />
                     )}
 
@@ -439,12 +492,12 @@ export default function EventMapPage() {
                             return (
                               <div
                                 key={box.id}
-                                className={`absolute w-7 h-7 rounded-full ${isOcupado ? 'bg-red-500' : 'bg-blue-600'} text-white text-[10px] flex items-center justify-center shadow-md transition-colors duration-300`}
+                                className={`absolute w-5 h-5 rounded-full ${isOcupado ? 'bg-red-500' : 'bg-blue-600 hover:bg-blue-500'} text-white text-[8px] flex items-center justify-center shadow-sm transition-transform hover:scale-125 cursor-pointer`}
                                 style={{
                                   left: boxX,
                                   top: boxY,
-                                  width: 28,
-                                  height: 28
+                                  width: 20,
+                                  height: 20
                                 }}
                                 title={`Box ${box.numero}: ${isOcupado ? 'Ocupado' : 'Disponible'}`}
                               >
@@ -456,8 +509,8 @@ export default function EventMapPage() {
                       ) : (
                         <div className="flex flex-col items-center justify-center w-full h-full">
                           <div className="flex flex-col items-center justify-center bg-black/40 rounded p-1 backdrop-blur-[1px]">
-                            <span className="text-white text-xs font-bold">{soldCount}/{capacity}</span>
-                            <div className="w-12 h-1 bg-white/30 rounded-full mt-1 overflow-hidden">
+                            <span className="text-white text-[10px] font-bold">{soldCount}/{capacity}</span>
+                            <div className="w-8 h-1 bg-white/20 rounded-full mt-0.5 overflow-hidden">
                               <div
                                 className={`h-full ${isFull ? 'bg-red-500' : 'bg-blue-400'}`}
                                 style={{ width: `${Math.min(percentage, 100)}%` }}
