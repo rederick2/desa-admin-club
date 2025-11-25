@@ -534,6 +534,28 @@ export default function MapEditorPage() {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
+          onTouchStart={(e) => {
+            if (e.touches.length === 1) {
+              setIsDraggingCanvas(true)
+              setDragStart({
+                x: e.touches[0].clientX - transform.x,
+                y: e.touches[0].clientY - transform.y
+              })
+            }
+          }}
+          onTouchMove={(e) => {
+            if (!isDraggingCanvas || e.touches.length !== 1) return
+            // Prevent default to stop scrolling the page while dragging map
+            // e.preventDefault() // Note: might need passive: false in listener if React doesn't handle it
+            setTransform(prev => ({
+              ...prev,
+              x: e.touches[0].clientX - dragStart.x,
+              y: e.touches[0].clientY - dragStart.y
+            }))
+          }}
+          onTouchEnd={() => {
+            setIsDraggingCanvas(false)
+          }}
         >
           <div
             ref={containerRef}

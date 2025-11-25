@@ -351,24 +351,13 @@ export default function EventMapPage() {
             {eventName} <span className="text-zinc-400 font-normal text-sm">({clubName})</span>
           </h1>
           <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500/20 text-green-400' :
-            realtimeStatus === 'CONNECTING' ? 'bg-yellow-500/20 text-yellow-400' :
-              'bg-red-500/20 text-red-400'
+              realtimeStatus === 'CONNECTING' ? 'bg-yellow-500/20 text-yellow-400' :
+                'bg-red-500/20 text-red-400'
             }`}>
             <span className={`w-1.5 h-1.5 rounded-full ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500 animate-pulse' : 'bg-current'}`} />
             {realtimeStatus === 'SUBSCRIBED' ? 'EN VIVO' : realtimeStatus}
           </div>
         </div>
-
-        {/*<div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={testConnection}
-            className="h-8 text-xs border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-          >
-            Probar Conexión
-          </Button>
-        </div>*/}
       </div>
 
       {/* Map Canvas Area */}
@@ -402,6 +391,28 @@ export default function EventMapPage() {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
+          onTouchStart={(e) => {
+            if (e.touches.length === 1) {
+              setIsDragging(true)
+              setDragStart({
+                x: e.touches[0].clientX - transform.x,
+                y: e.touches[0].clientY - transform.y
+              })
+            }
+          }}
+          onTouchMove={(e) => {
+            if (!isDragging || e.touches.length !== 1) return
+            // Prevent default to stop scrolling the page while dragging map
+            // e.preventDefault() // Note: might need passive: false in listener if React doesn't handle it
+            setTransform(prev => ({
+              ...prev,
+              x: e.touches[0].clientX - dragStart.x,
+              y: e.touches[0].clientY - dragStart.y
+            }))
+          }}
+          onTouchEnd={() => {
+            setIsDragging(false)
+          }}
         >
           <div
             ref={containerRef}
