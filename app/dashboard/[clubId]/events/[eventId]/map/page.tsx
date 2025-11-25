@@ -390,8 +390,8 @@ export default function EventMapPage() {
             {eventName} <span className="text-zinc-400 font-normal text-sm">({clubName})</span>
           </h1>
           <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500/20 text-green-400' :
-              realtimeStatus === 'CONNECTING' ? 'bg-yellow-500/20 text-yellow-400' :
-                'bg-red-500/20 text-red-400'
+            realtimeStatus === 'CONNECTING' ? 'bg-yellow-500/20 text-yellow-400' :
+              'bg-red-500/20 text-red-400'
             }`}>
             <span className={`w-1.5 h-1.5 rounded-full ${realtimeStatus === 'SUBSCRIBED' ? 'bg-green-500 animate-pulse' : 'bg-current'}`} />
             {realtimeStatus === 'SUBSCRIBED' ? 'EN VIVO' : realtimeStatus}
@@ -538,8 +538,8 @@ export default function EventMapPage() {
                   }}
                 >
                   {/* Zone Label */}
-                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap z-10 pointer-events-none">
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold shadow-sm backdrop-blur-sm select-none border ${isFull ? 'bg-red-900/80 text-red-100 border-red-500' : 'bg-black/60 text-white border-white/10'}`}>
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap z-10 pointer-events-none">
+                    <span className={`px-1.5 py-0.5 rounded text-[15x] font-bold shadow-sm backdrop-blur-sm select-none border ${isFull ? 'bg-red-900/80 text-red-100 border-red-500' : 'bg-black/60 text-white border-white/10'}`}>
                       {cz.nombre}
                     </span>
                   </div>
@@ -574,12 +574,12 @@ export default function EventMapPage() {
                             return (
                               <div
                                 key={box.id}
-                                className={`absolute w-5 h-5 rounded-full ${isOcupado ? 'bg-red-500' : 'bg-blue-600 hover:bg-blue-500'} text-white text-[8px] flex items-center justify-center shadow-sm transition-transform hover:scale-125 cursor-pointer`}
+                                className={`absolute w-5 h-5 rounded-full ${isOcupado ? 'bg-red-500' : 'bg-blue-600 hover:bg-blue-500'} text-white text-[20px] flex items-center justify-center shadow-sm transition-transform hover:scale-125 cursor-pointer`}
                                 style={{
                                   left: boxX,
                                   top: boxY,
-                                  width: 20,
-                                  height: 20
+                                  width: 48,
+                                  height: 48
                                 }}
                                 title={`Box ${box.numero}: ${isOcupado ? 'Ocupado' : 'Disponible'}`}
                               >

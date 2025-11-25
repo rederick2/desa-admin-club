@@ -27,7 +27,7 @@ import {
 import { Plus, Save, Layout, PenTool, Trash2, ZoomIn, ZoomOut, Maximize, Move, Menu, X, ChevronLeft } from 'lucide-react'
 
 // Constants
-const BOX_VISUAL_SIZE = 28
+const BOX_VISUAL_SIZE = 48
 
 interface Point {
   x: number
@@ -837,7 +837,7 @@ export default function MapEditorPage() {
                                 enableResizing={false}
                                 className="z-50 pointer-events-auto"
                               >
-                                <div className="w-full h-full rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center shadow-md cursor-move hover:scale-110 transition-transform border border-white/20">
+                                <div className="w-full h-full rounded-full bg-blue-600 text-white text-[20px] flex items-center justify-center shadow-md cursor-move hover:scale-110 transition-transform border border-white/20">
                                   {box.numero_box}
                                 </div>
                               </Rnd>
@@ -846,7 +846,7 @@ export default function MapEditorPage() {
                             return (
                               <div
                                 key={box.id}
-                                className="absolute w-7 h-7 rounded-full bg-blue-600/80 text-white text-[10px] flex items-center justify-center shadow-sm pointer-events-auto border border-white/10"
+                                className="absolute w-7 h-7 rounded-full bg-blue-600/80 text-white text-[20px] flex items-center justify-center shadow-sm pointer-events-auto border border-white/10"
                                 style={{ left: boxX, top: boxY, width: BOX_VISUAL_SIZE, height: BOX_VISUAL_SIZE }}
                               >
                                 {box.numero_box}
