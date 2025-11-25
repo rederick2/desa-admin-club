@@ -68,6 +68,7 @@ export default function EventMapPage() {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const lastPinchDistance = useRef<number | null>(null)
 
   useEffect(() => {
     if (!clubId || !eventId) return
@@ -398,20 +399,42 @@ export default function EventMapPage() {
                 x: e.touches[0].clientX - transform.x,
                 y: e.touches[0].clientY - transform.y
               })
+            } else if (e.touches.length === 2) {
+              setIsDragging(false)
+              const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+              )
+              lastPinchDistance.current = dist
             }
           }}
           onTouchMove={(e) => {
-            if (!isDragging || e.touches.length !== 1) return
-            // Prevent default to stop scrolling the page while dragging map
-            // e.preventDefault() // Note: might need passive: false in listener if React doesn't handle it
-            setTransform(prev => ({
-              ...prev,
-              x: e.touches[0].clientX - dragStart.x,
-              y: e.touches[0].clientY - dragStart.y
-            }))
+            if (e.touches.length === 1 && isDragging) {
+              setTransform(prev => ({
+                ...prev,
+                x: e.touches[0].clientX - dragStart.x,
+                y: e.touches[0].clientY - dragStart.y
+              }))
+            } else if (e.touches.length === 2 && lastPinchDistance.current !== null) {
+              const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+              )
+
+              const delta = dist - lastPinchDistance.current
+              const scaleAmount = delta * 0.01 // Sensitivity factor
+
+              setTransform(prev => {
+                const newScale = Math.min(Math.max(0.1, prev.k + scaleAmount), 5)
+                return { ...prev, k: newScale }
+              })
+
+              lastPinchDistance.current = dist
+            }
           }}
           onTouchEnd={() => {
             setIsDragging(false)
+            lastPinchDistance.current = null
           }}
         >
           <div
