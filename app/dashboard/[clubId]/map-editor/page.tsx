@@ -260,9 +260,20 @@ export default function MapEditorPage() {
   const handleWheel = (e: React.WheelEvent) => {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault()
+      const rect = wrapperRef.current?.getBoundingClientRect()
+      if (!rect) return
+
       const scaleAmount = -e.deltaY * 0.001
       const newScale = Math.min(Math.max(0.1, transform.k + scaleAmount), 5)
-      setTransform(prev => ({ ...prev, k: newScale }))
+
+      const scaleRatio = newScale / transform.k
+      const mouseX = e.clientX - rect.left
+      const mouseY = e.clientY - rect.top
+
+      const newX = mouseX - (mouseX - transform.x) * scaleRatio
+      const newY = mouseY - (mouseY - transform.y) * scaleRatio
+
+      setTransform({ x: newX, y: newY, k: newScale })
     }
   }
 
@@ -287,8 +298,35 @@ export default function MapEditorPage() {
     setIsDraggingCanvas(false)
   }
 
-  const zoomIn = () => setTransform(prev => ({ ...prev, k: Math.min(prev.k * 1.2, 5) }))
-  const zoomOut = () => setTransform(prev => ({ ...prev, k: Math.max(prev.k / 1.2, 0.1) }))
+  const zoomIn = () => {
+    const rect = wrapperRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    const newScale = Math.min(transform.k * 1.2, 5)
+    const scaleRatio = newScale / transform.k
+    const centerX = rect.width / 2
+    const centerY = rect.height / 2
+
+    const newX = centerX - (centerX - transform.x) * scaleRatio
+    const newY = centerY - (centerY - transform.y) * scaleRatio
+
+    setTransform({ x: newX, y: newY, k: newScale })
+  }
+
+  const zoomOut = () => {
+    const rect = wrapperRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    const newScale = Math.max(transform.k / 1.2, 0.1)
+    const scaleRatio = newScale / transform.k
+    const centerX = rect.width / 2
+    const centerY = rect.height / 2
+
+    const newX = centerX - (centerX - transform.x) * scaleRatio
+    const newY = centerY - (centerY - transform.y) * scaleRatio
+
+    setTransform({ x: newX, y: newY, k: newScale })
+  }
 
   const resetTransform = () => {
     if (wrapperRef.current) {
@@ -564,13 +602,23 @@ export default function MapEditorPage() {
                 e.touches[0].clientY - e.touches[1].clientY
               )
 
+              const rect = wrapperRef.current?.getBoundingClientRect()
+              if (!rect) return
+
               const delta = dist - lastPinchDistance.current
               const scaleAmount = delta * 0.01 // Sensitivity factor
+              const newScale = Math.min(Math.max(0.1, transform.k + scaleAmount), 5)
 
-              setTransform(prev => {
-                const newScale = Math.min(Math.max(0.1, prev.k + scaleAmount), 5)
-                return { ...prev, k: newScale }
-              })
+              const scaleRatio = newScale / transform.k
+
+              // Calculate center of pinch
+              const centerX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left
+              const centerY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top
+
+              const newX = centerX - (centerX - transform.x) * scaleRatio
+              const newY = centerY - (centerY - transform.y) * scaleRatio
+
+              setTransform({ x: newX, y: newY, k: newScale })
 
               lastPinchDistance.current = dist
             }
