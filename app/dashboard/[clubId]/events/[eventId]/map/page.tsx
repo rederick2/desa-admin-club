@@ -6,10 +6,32 @@ import { createBrowserClient } from '@supabase/ssr'
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { ZoomIn, ZoomOut, Maximize, Move } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ViewTicketsDialog } from '@/components/view-tickets-dialog'
 
 interface Point {
   x: number
   y: number
+}
+
+interface EventZone {
+  id: string
+  tipo: string | null
+  club_zone_id: string
+  capacidad: number
+  precio: number
+  activo: boolean
+  club_zones: {
+    id: string
+    nombre: string
+    es_zona_boxes: boolean
+    pos_x: number | null
+    pos_y: number | null
+    width_pct: number | null
+    height_pct: number | null
+    tipo_forma: 'rect' | 'circle' | 'poly' | null
+    lados: number | null
+    puntos: Point[] | null
+  }
 }
 
 interface ClubZone {
@@ -23,13 +45,6 @@ interface ClubZone {
   tipo_forma: 'rect' | 'circle' | 'poly' | null
   lados: number | null
   puntos: Point[] | null
-}
-
-interface EventZone {
-  id: string
-  tipo: string | null
-  capacidad: number | null
-  club_zones: ClubZone | null
 }
 
 interface Box {
@@ -56,10 +71,14 @@ export default function EventMapPage() {
   const [bgUrl, setBgUrl] = useState<string | null>(null)
   const [zones, setZones] = useState<EventZone[]>([])
   const [boxes, setBoxes] = useState<Box[]>([])
+  const [boxId, setBoxId] = useState<string | null>(null)
+  const [boxNumber, setBoxNumber] = useState<number | null>(null)
   const [ticketCounts, setTicketCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [realtimeStatus, setRealtimeStatus] = useState<string>('DISCONNECTED')
-
+  const [viewTicketsDialogOpen, setViewTicketsDialogOpen] = useState(false)
+  const [selectedZoneForView, setSelectedZoneForView] = useState<EventZone | null>(null)
+  const [boxesForDialog, setBoxesForDialog] = useState<Box[]>([])
   const containerRef = useRef<HTMLDivElement | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
 
@@ -363,6 +382,13 @@ export default function EventMapPage() {
     }
   }
 
+  const handleOpenViewTickets = (zone: EventZone, box: Box | null) => {
+    setBoxId(box?.id ?? null)
+    setSelectedZoneForView(zone);
+    setBoxNumber(box?.numero ?? null)
+    setViewTicketsDialogOpen(true);
+  }
+
   useEffect(() => {
     // Initial fit
     const timer = setTimeout(resetTransform, 100)
@@ -545,7 +571,7 @@ export default function EventMapPage() {
                   </div>
 
                   {/* Shape Visual */}
-                  <div className="w-full h-full relative group">
+                  <div className={`w-full h-full relative group ${!cz.es_zona_boxes ? 'hover:scale-105' : ''} cursor-pointer`} onClick={() => handleOpenViewTickets(zone, null)}>
                     {cz.tipo_forma === 'poly' ? (
                       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
                         <polygon
@@ -575,6 +601,7 @@ export default function EventMapPage() {
                               <div
                                 key={box.id}
                                 className={`absolute w-5 h-5 rounded-full ${isOcupado ? 'bg-red-500' : 'bg-blue-600 hover:bg-blue-500'} text-white text-[20px] flex items-center justify-center shadow-sm transition-transform hover:scale-125 cursor-pointer`}
+                                onClick={() => handleOpenViewTickets(zone, box)}
                                 style={{
                                   left: boxX,
                                   top: boxY,
@@ -594,7 +621,7 @@ export default function EventMapPage() {
                             <span className="text-white text-[10px] font-bold">{soldCount}/{capacity}</span>
                             <div className="w-8 h-1 bg-white/20 rounded-full mt-0.5 overflow-hidden">
                               <div
-                                className={`h-full ${isFull ? 'bg-red-500' : 'bg-blue-400'}`}
+                                className={`h-full ${isFull ? 'bg-red-500' : 'bg-blue-400'} hover:scale-125 cursor-pointer`}
                                 style={{ width: `${Math.min(percentage, 100)}%` }}
                               />
                             </div>
@@ -609,6 +636,19 @@ export default function EventMapPage() {
           </div>
         </div>
       </div>
+
+      {selectedZoneForView && (
+        <ViewTicketsDialog
+          open={viewTicketsDialogOpen}
+          onOpenChange={setViewTicketsDialogOpen}
+          eventZoneId={selectedZoneForView.id}
+          zoneName={selectedZoneForView.club_zones.nombre}
+          isBoxZone={selectedZoneForView.club_zones.es_zona_boxes}
+          initialBoxId={boxId}
+          initialBoxNumber={boxNumber}
+          viewMap={true}
+        />
+      )}
     </div>
   )
 }

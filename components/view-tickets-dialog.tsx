@@ -57,7 +57,10 @@ interface ViewTicketsDialogProps {
   eventZoneId: string
   zoneName: string
   isBoxZone?: boolean
-  boxes?: Box[]
+  boxes?: Box[] | null
+  initialBoxId?: string | null
+  initialBoxNumber?: number | null
+  viewMap?: boolean
 }
 
 export function ViewTicketsDialog({
@@ -67,10 +70,14 @@ export function ViewTicketsDialog({
   zoneName,
   isBoxZone = false,
   boxes = [],
+  initialBoxId = null,
+  initialBoxNumber = null,
+  viewMap = false,
 }: ViewTicketsDialogProps) {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedBoxId, setSelectedBoxId] = useState<string>('all')
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -80,8 +87,9 @@ export function ViewTicketsDialog({
   useEffect(() => {
     if (open) {
       fetchTickets()
+      setSelectedBoxId(initialBoxId ? initialBoxId.toString() : 'all')
     }
-  }, [open, eventZoneId])
+  }, [open, eventZoneId, initialBoxId, viewMap])
 
   const fetchTickets = async () => {
     setLoading(true)
@@ -89,10 +97,24 @@ export function ViewTicketsDialog({
       const selectQuery = isBoxZone
         ? 'id, codigo, usado, users(nombre, email), promoters(users(nombre)), promoter_links(boxes(id, numero))'
         : 'id, codigo, usado, users(nombre, email), promoters(users(nombre))'
-      const { data, error } = await supabase
+      /*const { data, error } = await supabase
         .from('tickets')
         .select(selectQuery)
-        .eq('event_zone_id', eventZoneId)
+        .eq('event_zone_id', eventZoneId)*/
+
+      let query = supabase
+        .from('tickets')
+        .select(selectQuery);
+
+      if (isBoxZone && viewMap) {
+        // Buscar tickets por los box_id que pertenecen a esta zona
+        query = query.eq('promoter_links.box_id', initialBoxId)
+      } else {
+        // Buscar tickets por zona general
+        query = query.eq('event_zone_id', eventZoneId)
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error
       setTickets(data || [])
@@ -104,10 +126,14 @@ export function ViewTicketsDialog({
   }
 
   const filteredTickets = useMemo(() => {
-    return tickets.filter(ticket =>
-      ticket.users?.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [tickets, searchTerm])
+    return tickets.filter(ticket => {
+      const matchesSearch = ticket.users?.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesBox = selectedBoxId === 'all' ||
+        (ticket.promoter_links?.boxes?.id.toString() === selectedBoxId)
+
+      return matchesSearch && matchesBox
+    })
+  }, [tickets, searchTerm, selectedBoxId])
 
   const handleExport = () => {
     const headers = ['Nombre', 'Email', 'Código', 'Promotor', 'Estado']
@@ -119,8 +145,8 @@ export function ViewTicketsDialog({
       ticket.usado ? 'Usado' : 'No usado'
     ])
 
-    let csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\n" 
+    let csvContent = "data:text/csv;charset=utf-8,"
+      + headers.join(",") + "\n"
       + rows.map(e => e.join(",")).join("\n");
 
     const encodedUri = encodeURI(csvContent)
@@ -136,7 +162,7 @@ export function ViewTicketsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Tickets para "{zoneName}"</DialogTitle>
+          <DialogTitle>Tickets para "{zoneName}" {isBoxZone && viewMap && `Box ${initialBoxNumber}`}</DialogTitle>
           <DialogDescription>Listado de tickets generados para esta zona.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-wrap gap-2 justify-between items-center">
@@ -146,32 +172,13 @@ export function ViewTicketsDialog({
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
-          {isBoxZone && (
-            <Select>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por box" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los boxes</SelectItem>
-                {boxes.map(box => (
-                  <SelectItem key={box.id} value={box.id.toString()}>
-                    Box #{box.numero}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Button variant="outline" onClick={handleExport} disabled={filteredTickets.length === 0}>
-            <Download className="w-4 h-4 mr-2" />
-            Exportar a Excel
-          </Button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto">
           {loading ? <p>Cargando...</p> : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  {isBoxZone && <TableHead>Box</TableHead>}
+                  {isBoxZone && !viewMap && <TableHead>Box</TableHead>}
                   <TableHead>Nombre</TableHead>
                   <TableHead>Promotor</TableHead>
                   <TableHead>Código</TableHead>
@@ -181,7 +188,7 @@ export function ViewTicketsDialog({
               <TableBody>
                 {filteredTickets.map((ticket) => (
                   <TableRow key={ticket.id}>
-                    {isBoxZone && (
+                    {isBoxZone && !viewMap && (
                       <TableCell>Box #{ticket.promoter_links?.boxes?.numero || 'N/A'}</TableCell>
                     )}
                     <TableCell>{ticket.users?.nombre || 'N/A'}</TableCell>
