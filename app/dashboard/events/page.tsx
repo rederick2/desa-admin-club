@@ -57,14 +57,14 @@ export default function EventsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center ">
         <p className="text-muted-foreground">Cargando eventos...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen ">
       <AdminNav clubName="Ver Evento" userEmail={user?.email} />
       <div className="max-w-6xl mx-auto p-4 sm:p-8">
         <h1 className="text-3xl font-bold mb-8">Explorar Eventos</h1>

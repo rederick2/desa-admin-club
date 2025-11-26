@@ -35,22 +35,22 @@ interface PromoterLink {
   usados: number | null
   link_url: string | null
   event_zones: {
+    id: string
+    tipo: string
+    events: {
+      id: string
+      nombre: string
+      fecha_inicio: string
+    } | null
+    club_zones: {
+      id: string
+      nombre: string
+      clubs: {
         id: string
-        tipo: string
-        events: {
-            id: string
-            nombre: string
-            fecha_inicio: string
-        } | null
-        club_zones: {
-            id: string
-            nombre: string    
-            clubs: {
-                id: string
-                nombre: string
-            } | null
-        } | null
-    } | null  
+        nombre: string
+      } | null
+    } | null
+  } | null
   boxes: {
     id: string
     numero: number
@@ -155,7 +155,7 @@ export default function PromoterPage() {
             boxes ( id, numero )
           `)
           .in('promoter_id', promoterIds)
-          
+
 
         linksData = data ?? []
         linksError = error
@@ -189,7 +189,7 @@ export default function PromoterPage() {
   // ---------------------------
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center ">
         <p className="text-muted-foreground">Cargando tu panel de promotor...</p>
       </div>
     )
@@ -199,7 +199,7 @@ export default function PromoterPage() {
   // VIEW
   // ---------------------------
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-8">
+    <div className="min-h-screen  p-4 sm:p-8">
 
       {/* NAVBAR */}
       <nav className="flex justify-between items-center mb-8 p-4 bg-card rounded-lg shadow-sm">

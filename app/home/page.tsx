@@ -43,7 +43,7 @@ export default function HomePage() {
   const [user, setUser] = useState<User | null>(null)
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [selectedTickets, setSelectedTickets] = useState<Ticket[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const router = useRouter()
 
@@ -95,7 +95,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      <div className="min-h-screen flex items-center justify-center  text-foreground">
         <p className="text-muted-foreground">Cargando...</p>
       </div>
     )
@@ -116,28 +116,27 @@ export default function HomePage() {
     return fechaEvento < hoy;
   });
 
-  const groupTicketsByMonth = (ticketList: Ticket[]) => {
+  const groupTicketsByEvent = (ticketList: Ticket[]) => {
     const grouped: Record<string, Ticket[]> = {};
     ticketList.forEach(ticket => {
-      const dateStr = ticket.event_zones?.events?.fecha_inicio;
-      if (!dateStr) return;
-      const date = new Date(dateStr);
-      const key = format(date, 'MMMM yyyy', { locale: es });
-      const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
-
-      if (!grouped[capitalizedKey]) {
-        grouped[capitalizedKey] = [];
+      const eventId = ticket.event_zones?.events?.nombre || 'unknown';
+      if (!grouped[eventId]) {
+        grouped[eventId] = [];
       }
-      grouped[capitalizedKey].push(ticket);
+      grouped[eventId].push(ticket);
     });
     return grouped;
   };
 
-  const activeGrouped = groupTicketsByMonth(entradasActivas);
-  const pastGrouped = groupTicketsByMonth(entradasPasadas);
+  const activeGrouped = groupTicketsByEvent(entradasActivas);
+  const pastGrouped = groupTicketsByEvent(entradasPasadas);
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 pb-20">
+    <div className="min-h-screen  text-foreground p-4 pb-20"
+      style={{
+        background: 'linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 50%, #4a2c6d 100%)',
+        minHeight: '100vh'
+      }}>
       <header className="flex justify-between items-center mb-6 pt-2">
         <h1 className="text-2xl font-bold">Mis Entradas</h1>
         <div className="flex gap-2">
@@ -178,13 +177,13 @@ export default function HomePage() {
         <TabsList className="grid w-full grid-cols-2 mb-6 bg-card/50 p-1 rounded-xl h-12">
           <TabsTrigger
             value="proximos"
-            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground font-medium"
+            className="rounded-lg data-[state=active]: data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground font-medium"
           >
             Próximos
           </TabsTrigger>
           <TabsTrigger
             value="anteriores"
-            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground font-medium"
+            className="rounded-lg data-[state=active]: data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground font-medium"
           >
             Anteriores
           </TabsTrigger>
@@ -192,27 +191,25 @@ export default function HomePage() {
 
         <TabsContent value="proximos" className="space-y-6">
           {Object.keys(activeGrouped).length > 0 ? (
-            Object.entries(activeGrouped).map(([month, monthTickets]) => (
-              <div key={month}>
-                <h2 className="text-lg font-semibold mb-3 text-muted-foreground">{month}</h2>
-                <div className="space-y-3">
-                  {monthTickets.map((ticket) => (
-                    <TicketCard
-                      key={ticket.id}
-                      eventName={ticket.event_zones?.events?.nombre || 'Evento'}
-                      eventLocation={ticket.event_zones?.events?.clubs?.nombre || 'Ubicación'}
-                      eventDate={ticket.event_zones?.events?.fecha_inicio || new Date()}
-                      ticketCount={1}
-                      eventImage="/placeholder.svg?height=100&width=100"
-                      onClick={() => {
-                        setSelectedTicket(ticket)
-                        setDialogOpen(true)
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))
+            <div className="space-y-3">
+              {Object.entries(activeGrouped).map(([eventName, eventTickets]) => {
+                const firstTicket = eventTickets[0];
+                return (
+                  <TicketCard
+                    key={eventName}
+                    eventName={firstTicket.event_zones?.events?.nombre || 'Evento'}
+                    eventLocation={firstTicket.event_zones?.events?.clubs?.nombre || 'Ubicación'}
+                    eventDate={firstTicket.event_zones?.events?.fecha_inicio || new Date()}
+                    ticketCount={eventTickets.length}
+                    eventImage="/placeholder.svg?height=100&width=100"
+                    onClick={() => {
+                      setSelectedTickets(eventTickets)
+                      setDialogOpen(true)
+                    }}
+                  />
+                )
+              })}
+            </div>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No tienes entradas próximas.</p>
@@ -222,27 +219,25 @@ export default function HomePage() {
 
         <TabsContent value="anteriores" className="space-y-6">
           {Object.keys(pastGrouped).length > 0 ? (
-            Object.entries(pastGrouped).map(([month, monthTickets]) => (
-              <div key={month}>
-                <h2 className="text-lg font-semibold mb-3 text-muted-foreground">{month}</h2>
-                <div className="space-y-3">
-                  {monthTickets.map((ticket) => (
-                    <TicketCard
-                      key={ticket.id}
-                      eventName={ticket.event_zones?.events?.nombre || 'Evento'}
-                      eventLocation={ticket.event_zones?.events?.clubs?.nombre || 'Ubicación'}
-                      eventDate={ticket.event_zones?.events?.fecha_inicio || new Date()}
-                      ticketCount={1}
-                      eventImage="/placeholder.svg?height=100&width=100"
-                      onClick={() => {
-                        setSelectedTicket(ticket)
-                        setDialogOpen(true)
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))
+            <div className="space-y-3">
+              {Object.entries(pastGrouped).map(([eventName, eventTickets]) => {
+                const firstTicket = eventTickets[0];
+                return (
+                  <TicketCard
+                    key={eventName}
+                    eventName={firstTicket.event_zones?.events?.nombre || 'Evento'}
+                    eventLocation={firstTicket.event_zones?.events?.clubs?.nombre || 'Ubicación'}
+                    eventDate={firstTicket.event_zones?.events?.fecha_inicio || new Date()}
+                    ticketCount={eventTickets.length}
+                    eventImage="/placeholder.svg?height=100&width=100"
+                    onClick={() => {
+                      setSelectedTickets(eventTickets)
+                      setDialogOpen(true)
+                    }}
+                  />
+                )
+              })}
+            </div>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No tienes entradas pasadas.</p>
@@ -254,8 +249,8 @@ export default function HomePage() {
       <TicketDetailDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        ticket={selectedTicket}
+        tickets={selectedTickets}
       />
-    </div>
+    </div >
   )
 }

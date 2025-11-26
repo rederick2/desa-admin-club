@@ -28,10 +28,10 @@ export function TicketCard({
 
   return (
     <Card
-      className="overflow-hidden border-0 bg-card/50 hover:bg-card/80 transition-colors cursor-pointer"
+      className="overflow-hidden border-1 border-white/10 bg-card/50 hover:bg-card/80 transition-colors cursor-pointer"
       onClick={onClick}
     >
-      <CardContent className="p-0 flex items-center gap-4">
+      <CardContent className="p-0 flex items-center gap-4 ml-2">
         <div className="relative h-24 w-24 flex-shrink-0">
           <Image
             src={eventImage}

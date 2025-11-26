@@ -193,7 +193,7 @@ export function ViewTicketsDialog({
                     )}
                     <TableCell>{ticket.users?.nombre || 'N/A'}</TableCell>
                     <TableCell>{ticket.promoters?.users?.nombre || 'General'}</TableCell>
-                    <TableCell>{ticket.codigo}</TableCell>
+                    <TableCell>{ticket.codigo.substring(0, 11)}</TableCell>
                     <TableCell>
                       <Badge variant={ticket.usado ? 'secondary' : 'default'}>
                         {ticket.usado ? 'Usado' : 'No usado'}

@@ -80,7 +80,7 @@ export default function ClubDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Cargando...</p>
       </div>
     )
@@ -91,7 +91,7 @@ export default function ClubDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Welcome Section */}
         <div>

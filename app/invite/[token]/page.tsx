@@ -54,10 +54,17 @@ function formatFechaCompleta(fecha: string) {
 }
 
 function generarCodigoTicket() {
+  /* if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+     return 'TK-' + crypto.randomUUID().split('-')[0].toUpperCase()
+   }
+   return 'TK-' + Math.random().toString(36).substring(2, 10).toUpperCase()*/
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return 'TK-' + crypto.randomUUID().split('-')[0].toUpperCase()
+    return 'TK-' + crypto.randomUUID().replace(/-/g, '').toUpperCase()
   }
-  return 'TK-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+
+  const rand = Math.random().toString(36).substring(2)
+  const time = Date.now().toString(36)
+  return 'TK-' + (rand + time).toUpperCase()
 }
 
 async function createTicketForUser(opts: {
@@ -235,47 +242,47 @@ export default function InvitePage() {
   }
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  if (!formData.nombre || !formData.email || !formData.telefono) {
-    toast.error('Completa todos los campos para continuar')
-    return
-  }
-  if (!signupPassword || !signupPassword2) {
-    toast.error('Ingresa una contraseña')
-    return
-  }
-  if (signupPassword !== signupPassword2) {
-    toast.error('Las contraseñas no coinciden')
-    return
-  }
-
-  setSignupLoading(true)
-  try {
-    const { data: signUpData, error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: signupPassword,
-      options: {
-        data: {
-          nombre: formData.nombre,
-        },
-      },
-    })
-
-    if (error) {
-      console.error(error)
-      toast.error(error.message)
-      setSignupLoading(false)
+    e.preventDefault()
+    if (!formData.nombre || !formData.email || !formData.telefono) {
+      toast.error('Completa todos los campos para continuar')
+      return
+    }
+    if (!signupPassword || !signupPassword2) {
+      toast.error('Ingresa una contraseña')
+      return
+    }
+    if (signupPassword !== signupPassword2) {
+      toast.error('Las contraseñas no coinciden')
       return
     }
 
-    if (signUpData.user) {
+    setSignupLoading(true)
+    try {
+      const { data: signUpData, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: signupPassword,
+        options: {
+          data: {
+            nombre: formData.nombre,
+          },
+        },
+      })
+
+      if (error) {
+        console.error(error)
+        toast.error(error.message)
+        setSignupLoading(false)
+        return
+      }
+
+      if (signUpData.user) {
         const { error: insertError } = await supabase
           .from('users')
           .insert([
             {
               id: signUpData.user.id,
               email: formData.email,
-              nombre: formData.nombre,          
+              nombre: formData.nombre,
               telefono: formData.telefono,
               numero_documento: formData.numero_documento
             },
@@ -304,54 +311,54 @@ export default function InvitePage() {
 
       }
 
-    // 👇 AQUÍ obtenemos el usuario recién creado
-    const newUser = signUpData.user ?? signUpData.session?.user
+      // 👇 AQUÍ obtenemos el usuario recién creado
+      const newUser = signUpData.user ?? signUpData.session?.user
 
-    if (!newUser) {
-      // Si tienes confirmación de email activada, aquí normalmente no hay sesión
-      toast.message(
-        'Te enviamos un correo de confirmación. Confirma tu cuenta y luego vuelve a este enlace.'
-      )
+      if (!newUser) {
+        // Si tienes confirmación de email activada, aquí normalmente no hay sesión
+        toast.message(
+          'Te enviamos un correo de confirmación. Confirma tu cuenta y luego vuelve a este enlace.'
+        )
+        setSignupLoading(false)
+        return
+      }
+
+      setUser(newUser)
+
+      // crear ticket con el usuario recién creado ✅
+      if (!zoneData || !linkData) {
+        toast.error('Error interno: faltan datos del evento')
+        setSignupLoading(false)
+        return
+      }
+
+      await createTicketForUser({
+        supabase,
+        user: newUser,
+        eventZoneId: zoneData.id,
+        promoterId: linkData.promoter_id,
+        promoterLinkId: linkData.id,
+      })
+
+      await supabase
+        .from('promoter_links')
+        .update({ usados: (linkData.usados ?? 0) + 1 })
+        .eq('id', linkData.id)
+
+      toast.success('Cuenta creada y entrada registrada')
+      setSignupOpen(false)
+      router.push('/') // o /dashboard/tickets
+    } catch (error) {
+      console.error(error)
+      toast.error('Error al crear la cuenta o el ticket')
+    } finally {
       setSignupLoading(false)
-      return
     }
-
-    setUser(newUser)
-
-    // crear ticket con el usuario recién creado ✅
-    if (!zoneData || !linkData) {
-      toast.error('Error interno: faltan datos del evento')
-      setSignupLoading(false)
-      return
-    }
-
-    await createTicketForUser({
-      supabase,
-      user: newUser,
-      eventZoneId: zoneData.id,
-      promoterId: linkData.promoter_id,
-      promoterLinkId: linkData.id,
-    })
-
-    await supabase
-      .from('promoter_links')
-      .update({ usados: (linkData.usados ?? 0) + 1 })
-      .eq('id', linkData.id)
-
-    toast.success('Cuenta creada y entrada registrada')
-    setSignupOpen(false)
-    router.push('/') // o /dashboard/tickets
-  } catch (error) {
-    console.error(error)
-    toast.error('Error al crear la cuenta o el ticket')
-  } finally {
-    setSignupLoading(false)
   }
-}
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center ">
         <p className="text-muted-foreground">Cargando...</p>
       </div>
     )
@@ -359,7 +366,7 @@ export default function InvitePage() {
 
   if (!linkData || !zoneData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-screen flex items-center justify-center  px-4">
         <Card className="max-w-md">
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground mb-4">

@@ -8,6 +8,12 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
 import { Mail, Lock } from 'lucide-react'
+import { Cinzel } from 'next/font/google'
+
+const cinzel = Cinzel({
+  subsets: ['latin'],
+  weight: ['400', '600', '700']
+})
 
 export default function LoginPage() {
   const router = useRouter()
@@ -82,11 +88,13 @@ export default function LoginPage() {
           }}
         >
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold mb-2" style={{ color: '#ffffff' }}>
-              Bienvenido
+            <h1
+              className={`${cinzel.className} text-4xl mb-2 tracking-[4px] text-white font-semibold`}
+            >
+              BILOBA
             </h1>
             <p className="text-sm" style={{ color: '#b8b8b8' }}>
-              Accede a tu cuenta para gestionar eventos y tickets
+              Accede a tu cuenta para gestionar tus tickets
             </p>
           </div>
 
@@ -101,8 +109,10 @@ export default function LoginPage() {
               <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Email
               </label>
-              <div className="auth-input-wrapper">
-                <Mail className="auth-input-icon" size={18} style={{ color: '#888' }} />
+              <div className="flex items-center rounded-md border border-white/10">
+                <span className="pl-3 text-gray-400" style={{ paddingRight: '10px' }}>
+                  <Mail size={18} />
+                </span>
                 <Input
                   type="email"
                   placeholder="tu@email.com"
@@ -110,13 +120,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                   required
-                  style={{
-                    paddingLeft: '40px',
-                    background: 'rgba(30, 20, 50, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
-                    borderRadius: '8px'
-                  }}
+                  className="bg-transparent text-white focus-visible:ring-0"
                 />
               </div>
             </div>
@@ -125,8 +129,10 @@ export default function LoginPage() {
               <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Contraseña
               </label>
-              <div className="auth-input-wrapper">
-                <Lock className="auth-input-icon" size={18} style={{ color: '#888' }} />
+              <div className="flex items-center rounded-md border border-white/10">
+                <span className="pl-3 text-gray-400" style={{ paddingRight: '10px' }}>
+                  <Lock className="auth-input-icon" size={18} style={{ color: '#888' }} />
+                </span>
                 <Input
                   type="password"
                   placeholder="••••••••"
@@ -134,13 +140,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                   required
-                  style={{
-                    paddingLeft: '40px',
-                    background: 'rgba(30, 20, 50, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#ffffff',
-                    borderRadius: '8px'
-                  }}
+                  className="bg-transparent text-white focus-visible:ring-0"
                 />
               </div>
             </div>

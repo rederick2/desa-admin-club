@@ -58,14 +58,14 @@ export default function EditEventPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center ">
         <p className="text-muted-foreground">Cargando...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen ">
       <AdminNav clubName="Editar Evento" userEmail={user?.email} />
       <main className="max-w-2xl mx-auto px-4 py-8">
         <Button

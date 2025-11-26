@@ -45,7 +45,7 @@ export default function CreateClubPage() {
 
   const handleCreateClub = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!user || !formData.nombre.trim()) {
       return
     }
@@ -88,14 +88,14 @@ export default function CreateClubPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center ">
         <p className="text-muted-foreground">Cargando...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
+    <div className="min-h-screen  py-12 px-4">
       <div className="max-w-md mx-auto">
         <Link href="/dashboard">
           <Button variant="ghost" className="mb-6">

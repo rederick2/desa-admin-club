@@ -565,13 +565,13 @@ export default function EventMapPage() {
                 >
                   {/* Zone Label */}
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap z-10 pointer-events-none">
-                    <span className={`px-1.5 py-0.5 rounded text-[15x] font-bold shadow-sm backdrop-blur-sm select-none border ${isFull ? 'bg-red-900/80 text-red-100 border-red-500' : 'bg-black/60 text-white border-white/10'}`}>
+                    <span className={`px-1.5 py-0.5 rounded text-[20px] font-bold shadow-sm backdrop-blur-sm select-none border ${isFull ? 'bg-red-900/80 text-red-100 border-red-500' : 'bg-black/60 text-white border-white/10'}`}>
                       {cz.nombre}
                     </span>
                   </div>
 
                   {/* Shape Visual */}
-                  <div className={`w-full h-full relative group ${!cz.es_zona_boxes ? 'hover:scale-105' : ''} cursor-pointer`} onClick={() => handleOpenViewTickets(zone, null)}>
+                  <div className={`w-full h-full relative group ${!cz.es_zona_boxes ? 'hover:scale-105' : ''} cursor-pointer`} onClick={() => !cz.es_zona_boxes ? handleOpenViewTickets(zone, null) : ''}>
                     {cz.tipo_forma === 'poly' ? (
                       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
                         <polygon
@@ -617,11 +617,11 @@ export default function EventMapPage() {
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center w-full h-full">
-                          <div className="flex flex-col items-center justify-center bg-black/40 rounded p-1 backdrop-blur-[1px]">
-                            <span className="text-white text-[10px] font-bold">{soldCount}/{capacity}</span>
-                            <div className="w-8 h-1 bg-white/20 rounded-full mt-0.5 overflow-hidden">
+                          <div className="flex flex-col items-center justify-center bg-black/40 rounded p-3 backdrop-blur-[1px]">
+                            <span className="text-white text-[30px] font-bold">{soldCount}/{capacity}</span>
+                            <div className="w-[200px] h-1 bg-white/20 rounded-full mt-1 overflow-hidden">
                               <div
-                                className={`h-full ${isFull ? 'bg-red-500' : 'bg-blue-400'} hover:scale-125 cursor-pointer`}
+                                className={`h-full ${isFull ? 'bg-red-500' : 'bg-blue-400'}`}
                                 style={{ width: `${Math.min(percentage, 100)}%` }}
                               />
                             </div>

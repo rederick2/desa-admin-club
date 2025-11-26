@@ -146,7 +146,7 @@ export default function ScanTicketPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background p-4">
+        <div className="min-h-screen  p-4">
             <header className="mb-6">
                 <Button
                     variant="ghost"
@@ -242,7 +242,7 @@ export default function ScanTicketPage() {
                         <CardContent className="space-y-4">
                             <div>
                                 <p className="text-sm text-muted-foreground">Código</p>
-                                <p className="font-mono font-bold text-lg">{ticket.codigo}</p>
+                                <p className="font-mono font-bold text-lg">{ticket.codigo.substring(0, 11)}</p>
                             </div>
 
                             <div>

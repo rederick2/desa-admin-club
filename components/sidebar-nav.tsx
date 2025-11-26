@@ -37,7 +37,7 @@ export function SidebarNav({ clubId }: SidebarNavProps) {
 
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 w-64 h-screen bg-card border-r border-border transition-transform md:translate-x-0',
+          'fixed left-0 top-0 z-40 w-64 h-screen border-r border-border transition-transform md:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
