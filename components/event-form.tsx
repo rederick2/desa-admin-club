@@ -21,6 +21,20 @@ interface EventFormProps {
   }
 }
 
+// 🔹 Helper: asegura que la fecha se guarde como hora de Perú (UTC-5)
+const toPeruDateTime = (value: string) => {
+  if (!value) return null
+
+  // datetime-local normalmente viene como 'YYYY-MM-DDTHH:mm' (16 caracteres)
+  // Si ya viene con segundos/zona, lo dejamos tal cual.
+  if (value.length > 16) {
+    return value
+  }
+
+  // Lo convertimos a 'YYYY-MM-DDTHH:mm:00-05:00'
+  return `${value}:00-05:00`
+}
+
 export function EventForm({ clubId, eventId, initialData }: EventFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -47,6 +61,8 @@ export function EventForm({ clubId, eventId, initialData }: EventFormProps) {
         ...formData,
         activo,
         club_id: clubId,
+        fecha_inicio: toPeruDateTime(formData.fecha_inicio),
+        fecha_fin: toPeruDateTime(formData.fecha_fin),
         limite_entradas: formData.limite_entradas ? parseInt(formData.limite_entradas as any) : null,
       }
 

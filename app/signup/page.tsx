@@ -6,8 +6,9 @@ import { createBrowserClient } from '@supabase/ssr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
+import { IdCard } from 'lucide-react'
 import Link from 'next/link'
-import { Mail, Lock, User, Phone } from 'lucide-react'
+import { Mail, Lock, User, Phone, Calendar } from 'lucide-react'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -19,6 +20,12 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [dni, setDni] = useState('')
+  const [fecha_nacimiento, setFechaNacimiento] = useState('')
+
+  const maxFecha = new Date()
+  maxFecha.setFullYear(maxFecha.getFullYear() - 18)
+  const maxDateStr = maxFecha.toISOString().split("T")[0]  // YYYY-MM-DD
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -63,6 +70,8 @@ export default function SignupPage() {
               email,
               nombre,
               telefono,
+              numero_documento: dni,
+              fecha_nacimiento,
             },
           ])
 
@@ -108,7 +117,7 @@ export default function SignupPage() {
               Crear Cuenta
             </h1>
             <p className="text-sm" style={{ color: '#b8b8b8' }}>
-              Regístrate para gestionar tus eventos y entradas
+              Regístrate para gestionar tus entradas
             </p>
           </div>
 
@@ -129,8 +138,10 @@ export default function SignupPage() {
               <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Nombre completo
               </label>
-              <div className="auth-input-wrapper">
-                <User className="auth-input-icon" size={18} style={{ color: '#888' }} />
+              <div className="flex items-center rounded-md border border-white/10">
+                <span className="pl-3 text-gray-400" style={{ paddingRight: '10px' }}>
+                  <User size={18} />
+                </span>
                 <Input
                   type="text"
                   placeholder="Juan Pérez"
@@ -139,7 +150,6 @@ export default function SignupPage() {
                   disabled={loading}
                   required
                   style={{
-                    paddingLeft: '40px',
                     background: 'rgba(30, 20, 50, 0.8)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     color: '#ffffff',
@@ -153,8 +163,10 @@ export default function SignupPage() {
               <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Email
               </label>
-              <div className="auth-input-wrapper">
-                <Mail className="auth-input-icon" size={18} style={{ color: '#888' }} />
+              <div className="flex items-center rounded-md border border-white/10">
+                <span className="pl-3 text-gray-400" style={{ paddingRight: '10px' }}>
+                  <Mail size={18} />
+                </span>
                 <Input
                   type="email"
                   placeholder="tu@email.com"
@@ -163,7 +175,33 @@ export default function SignupPage() {
                   disabled={loading}
                   required
                   style={{
-                    paddingLeft: '40px',
+                    background: 'rgba(30, 20, 50, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
+                Documento
+              </label>
+              <div className="flex items-center rounded-md border border-white/10">
+                <span className="pl-3 text-gray-400" style={{ paddingRight: '10px' }}>
+                  <IdCard size={18} />
+                </span>
+                <Input
+                  type="tel"
+                  placeholder="12345678"
+                  value={dni}
+                  required
+                  maxLength={12}
+                  onChange={(e) => {
+                    const soloNumeros = e.target.value.replace(/\D/g, "")
+                    setDni(soloNumeros)
+                  }}
+                  disabled={loading}
+                  style={{
                     background: 'rgba(30, 20, 50, 0.8)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     color: '#ffffff',
@@ -172,21 +210,21 @@ export default function SignupPage() {
                 />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Teléfono
               </label>
-              <div className="auth-input-wrapper">
-                <Phone className="auth-input-icon" size={18} style={{ color: '#888' }} />
+              <div className="flex items-center rounded-md border border-white/10">
+                <span className="pl-3 text-gray-400" style={{ paddingRight: '10px' }}>
+                  <Phone size={18} />
+                </span>
                 <Input
                   type="tel"
-                  placeholder="+34 600 000 000"
+                  placeholder="+51 900 000 000"
                   value={telefono}
                   onChange={(e) => setTelefono(e.target.value)}
                   disabled={loading}
                   style={{
-                    paddingLeft: '40px',
                     background: 'rgba(30, 20, 50, 0.8)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     color: '#ffffff',
@@ -195,13 +233,39 @@ export default function SignupPage() {
                 />
               </div>
             </div>
-
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
+                Fecha de nacimiento
+                <span className="text-gray-500"> * mayor de edad (18 años)</span>
+              </label>
+              <div className="flex items-center rounded-md border border-white/10">
+                <span className="pl-3 text-gray-400" style={{ paddingRight: '10px' }}>
+                  <Calendar size={18} />
+                </span>
+                <Input
+                  type="date"
+                  placeholder="dd/mm/yyyy"
+                  value={fecha_nacimiento}
+                  onChange={(e) => setFechaNacimiento(e.target.value)}
+                  disabled={loading}
+                  max={maxDateStr}
+                  style={{
+                    background: 'rgba(30, 20, 50, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Contraseña
               </label>
-              <div className="auth-input-wrapper">
-                <Lock className="auth-input-icon" size={18} style={{ color: '#888' }} />
+              <div className="flex items-center rounded-md border border-white/10">
+                <span className="pl-3 text-gray-400" style={{ paddingRight: '10px' }}>
+                  <Lock size={18} />
+                </span>
                 <Input
                   type="password"
                   placeholder="••••••••"
@@ -210,7 +274,6 @@ export default function SignupPage() {
                   disabled={loading}
                   required
                   style={{
-                    paddingLeft: '40px',
                     background: 'rgba(30, 20, 50, 0.8)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     color: '#ffffff',
@@ -224,8 +287,10 @@ export default function SignupPage() {
               <label className="block text-sm font-medium mb-2" style={{ color: '#e5e5e5' }}>
                 Confirmar contraseña
               </label>
-              <div className="auth-input-wrapper">
-                <Lock className="auth-input-icon" size={18} style={{ color: '#888' }} />
+              <div className="flex items-center rounded-md border border-white/10">
+                <span className="pl-3 text-gray-400" style={{ paddingRight: '10px' }}>
+                  <Lock size={18} />
+                </span>
                 <Input
                   type="password"
                   placeholder="••••••••"
@@ -234,7 +299,6 @@ export default function SignupPage() {
                   disabled={loading}
                   required
                   style={{
-                    paddingLeft: '40px',
                     background: 'rgba(30, 20, 50, 0.8)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                     color: '#ffffff',

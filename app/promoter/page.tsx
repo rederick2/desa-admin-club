@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { createBrowserClient } from '@supabase/ssr'
 import type { User } from '@supabase/supabase-js'
 import Link from 'next/link'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { UserIcon } from 'lucide-react'
 import { TicketCard } from '@/components/ticket-card'
 import { PromoterLinkDetailDialog } from '@/components/promoter-link-detail-dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -223,19 +225,33 @@ export default function PromoterPage() {
       <nav className="flex justify-between items-center mb-8 p-4 bg-card/50 rounded-lg shadow-sm backdrop-blur-sm">
         <h1 className="text-2xl font-bold">Mis Enlaces</h1>
         <div className="flex space-x-4">
-          <Button asChild variant="ghost">
-            <Link href="/dashboard/profile">Mi Perfil</Link>
-          </Button>
-          <Button
-            variant="outline"
-            className="bg-transparent border-white/20 hover:bg-white/10"
-            onClick={async () => {
-              await supabase.auth.signOut()
-              router.push('/login')
-            }}
-          >
-            Cerrar Sesión
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-xl h-10 w-10 bg-card border-0"
+              >
+                <UserIcon className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
+                Mi Perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-red-500 focus:text-red-500"
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                  router.push('/login')
+                }}
+              >
+                Cerrar Sesión
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </nav>
 

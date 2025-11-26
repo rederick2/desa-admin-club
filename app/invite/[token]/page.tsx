@@ -416,35 +416,6 @@ export default function InvitePage() {
             {/* Formulario de registro */}
             {!isQuotaFull ? (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="nombre">Nombre</Label>
-                  <Input
-                    id="nombre"
-                    value={formData.nombre}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nombre: e.target.value })
-                    }
-                    placeholder="Tu nombre completo"
-                    required
-                    disabled={submitting}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="email">Correo</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder="tu@email.com"
-                    required
-                    disabled={submitting}
-                  />
-                </div>
-
                 <Button
                   type="submit"
                   className="w-full"
