@@ -32,6 +32,7 @@ export function AppSidebar({ clubId, ...props }: AppSidebarProps) {
     { label: 'Zonas', href: `/dashboard/${clubId}/zones`, icon: Layers },
     { label: 'Promotores', href: `/dashboard/${clubId}/promoters`, icon: Users },
     { label: 'Mapa', href: `/dashboard/${clubId}/map-editor`, icon: Map },
+    { label: 'Staff', href: `/dashboard/${clubId}/staff`, icon: Users },
     { label: 'Estadísticas', href: `/dashboard/${clubId}/stats`, icon: BarChart3 },
   ]
 

@@ -41,11 +41,14 @@ export default function Home() {
           router.push('/promoter')
         } else if (roleData?.role_id === 3) {
           router.push('/home')
+        } else if (roleData?.role_id === 4) {
+          router.push('/staff')
         }
 
 
       } else {
         setLoading(false)
+        router.push('/login')
       }
     }
 
@@ -70,27 +73,7 @@ export default function Home() {
         background: 'linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 50%, #4a2c6d 100%)',
         minHeight: '100vh'
       }}>
-      <div className="text-center max-w-2xl">
-        <h1 className="text-5xl font-bold text-foreground mb-4">
-          Club Manager
-        </h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          Gestiona tus eventos, entradas y promotores en un solo lugar
-        </p>
 
-        <div className="flex gap-4 justify-center">
-          <Button onClick={() => router.push('/login')} size="lg">
-            Iniciar sesión
-          </Button>
-          <Button
-            onClick={() => router.push('/signup')}
-            variant="outline"
-            size="lg"
-          >
-            Crear cuenta
-          </Button>
-        </div>
-      </div>
     </div>
   )
 }
