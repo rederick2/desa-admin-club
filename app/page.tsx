@@ -54,7 +54,11 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center ">
+      <div className="min-h-screen flex items-center justify-center "
+        style={{
+          background: 'linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 50%, #4a2c6d 100%)',
+          minHeight: '100vh'
+        }}>
         <p className="text-muted-foreground">Cargando...</p>
       </div>
     )

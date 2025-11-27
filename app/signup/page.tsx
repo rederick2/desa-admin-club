@@ -220,8 +220,10 @@ export default function SignupPage() {
                 </span>
                 <Input
                   type="tel"
-                  placeholder="+51 900 000 000"
+                  placeholder="900 000 000"
                   value={telefono}
+                  required
+                  maxLength={9}
                   onChange={(e) => setTelefono(e.target.value)}
                   disabled={loading}
                   style={{
@@ -246,6 +248,7 @@ export default function SignupPage() {
                   type="date"
                   placeholder="dd/mm/yyyy"
                   value={fecha_nacimiento}
+                  required
                   onChange={(e) => setFechaNacimiento(e.target.value)}
                   disabled={loading}
                   max={maxDateStr}
