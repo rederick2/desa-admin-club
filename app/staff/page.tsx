@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { LogOut, QrCode, Search, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { UserIcon } from 'lucide-react'
 
 interface TicketDetails {
     id: string
@@ -148,6 +150,7 @@ export default function StaffDashboard() {
     const handleScan = async (result: string) => {
         if (result) {
             setScanning(false)
+            setLoading(true)
             let code = result
             if (result.includes('/ticket/')) {
                 code = result.split('/ticket/')[1]
@@ -187,6 +190,7 @@ export default function StaffDashboard() {
             if (error || !data) {
                 setError('Ticket no encontrado')
             } else {
+                setLoading(false)
                 setTicketData(data as any)
             }
         } catch (err) {
@@ -267,12 +271,32 @@ export default function StaffDashboard() {
                         <h1 className="text-2xl font-bold">Bienvenido, {user?.user_metadata?.nombre || 'Staff'}</h1>
                         <p className="text-white/60 text-sm">Panel de Control de Acceso</p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={async () => {
-                        await supabase.auth.signOut()
-                        router.push('/login')
-                    }}>
-                        <LogOut className="h-5 w-5" />
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="rounded-xl h-10 w-10 bg-card border-0"
+                            >
+                                <UserIcon className="h-5 w-5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => { }}>
+                                Mi Perfil
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={async () => {
+                                    await supabase.auth.signOut()
+                                    router.push('/login')
+                                }}
+                            >
+                                Cerrar Sesión
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 {!ticketData && !error && (
@@ -332,7 +356,7 @@ export default function StaffDashboard() {
                                 <h3 className="text-xl font-bold text-destructive">Error</h3>
                                 <p className="text-destructive-foreground">{error}</p>
                             </div>
-                            <Button variant="outline" className="w-full" onClick={() => setError(null)}>
+                            <Button variant="outline" className="w-full" onClick={() => { setError(null); setScanning(true); }}>
                                 Volver a escanear
                             </Button>
                         </CardContent>
@@ -394,7 +418,7 @@ export default function StaffDashboard() {
                                 </div>
                             )}
 
-                            <Button variant="outline" className="w-full" onClick={() => setTicketData(null)}>
+                            <Button variant="outline" className="w-full" onClick={() => { setTicketData(null); setScanning(true); }}>
                                 Escanear otro
                             </Button>
                         </CardContent>
@@ -425,7 +449,7 @@ export default function StaffDashboard() {
                                 <div key={ticket.id} className="bg-card/50 p-3 rounded-lg border border-white/5 flex justify-between items-center">
                                     <div>
                                         <p className="font-medium text-sm">{ticket.users.nombre}</p>
-                                        <p className="text-xs text-white/60">{ticket.codigo} • {ticket.users.numero_documento}</p>
+                                        <p className="text-xs text-white/60">{ticket.users.numero_documento} • {ticket.codigo}</p>
                                     </div>
                                     <div className="text-right">
                                         <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">

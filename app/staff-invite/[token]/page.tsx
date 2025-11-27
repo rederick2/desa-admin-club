@@ -137,6 +137,19 @@ export default function StaffInvitePage() {
                 // For now, let's assume success or handle specific error if needed.
             }
 
+            const { error: roleError2 } = await supabase
+                .from('staff')
+                .insert({
+                    user_id: userId,
+                    club_id: inviteData.club_id
+                })
+
+            if (roleError2) {
+                console.error('Role assignment error:', roleError)
+                // If duplicate key error, maybe they already have a role. 
+                // For now, let's assume success or handle specific error if needed.
+            }
+
             // Mark invite as used
             const { error: updateError } = await supabase
                 .from('staff_invites')
