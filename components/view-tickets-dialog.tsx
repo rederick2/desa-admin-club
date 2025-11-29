@@ -167,6 +167,7 @@ export function ViewTicketsDialog({
         </DialogHeader>
         <div className="flex flex-wrap gap-2 justify-between items-center">
           <Input
+            tabIndex={-1}
             placeholder="Buscar por nombre..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

@@ -32,6 +32,7 @@ interface Ticket {
     events: {
       nombre: string;
       fecha_inicio: string;
+      banner_url: string;
       clubs: {
         nombre: string;
       } | null;
@@ -74,6 +75,7 @@ export default function HomePage() {
             club_zones ( nombre ),
             events (
               nombre,
+              banner_url,
               fecha_inicio,
               clubs ( nombre )
             )
@@ -205,7 +207,7 @@ export default function HomePage() {
                     eventLocation={firstTicket.event_zones?.events?.clubs?.nombre || 'Ubicación'}
                     eventDate={firstTicket.event_zones?.events?.fecha_inicio || new Date()}
                     ticketCount={eventTickets.length}
-                    eventImage="/placeholder.svg?height=100&width=100"
+                    eventImage={firstTicket.event_zones?.events?.banner_url || "/placeholder.svg?height=100&width=100"}
                     onClick={() => {
                       setSelectedTickets(eventTickets)
                       setDialogOpen(true)
